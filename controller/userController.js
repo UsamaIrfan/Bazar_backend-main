@@ -150,7 +150,7 @@ const forgetPasswordVerify = async (req, res) => {
 
 
 const resetMyPasswords = async (req, res) => {
-
+ 
   const { email, token, newPassword } = req.body
 
   const decoded = await jwt.verify(token, process.env.JWT_SECRET);
@@ -168,7 +168,7 @@ const resetMyPasswords = async (req, res) => {
   if (user) {
     newPassword = bcrypt.hashSync(req.body.newPassword);
 
-    await User.findByIdAndUpdate(id, {
+    await User.findByIdAndUpdate(user._id, {
       password: newPassword
     })
 
