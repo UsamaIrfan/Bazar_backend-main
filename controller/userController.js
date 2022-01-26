@@ -77,11 +77,22 @@ const changePassword = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
+
+
+
+
 const signUpWithProvider = async (req, res) => {
   try {
     const isAdded = await User.findOne({ email: req.body.email });
-    if (isAdded) {
+  if (isAdded) {
       const token = signToken(isAdded);
+      
       res.send({
         token,
         _id: isAdded._id,
@@ -90,7 +101,7 @@ const signUpWithProvider = async (req, res) => {
         address: isAdded.address,
         phone: isAdded.phone,
         image: isAdded.image,
-      });
+        });
     } else {
       const newUser = new User({
         name: req.body.name,
