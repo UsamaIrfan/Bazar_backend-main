@@ -13,7 +13,7 @@ const {
 router.post('/login', loginAdmin);
 
 //add a staff
-router.post('/add', addStaff);
+// router.post('/add', addStaff);
 
 //get all staff
 router.post('/', getAllStaff);
