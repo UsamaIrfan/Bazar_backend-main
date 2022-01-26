@@ -78,31 +78,40 @@ const changePassword = async (req, res) => {
   }
 };
 
+
+
+
+
+
 const ForgetPasswordReq = async (req, res) => {
   try {
     const { email } = req.body;
-    console.log(req.body);
     const user = await User.findOne({ email });
-    
-    // console.log(user);
 
-    if (user) {
-      sendEmail(user.email,
-        {
-          subject: "demo", 
-          text: "hi",
-           html: "and easy to do anywhere, even with Node.js",
-        }
-      )
-
+    if(user){
+      const token = signToken(user);
+      res.send({
+        token,
+      })
     }
 
-    user && res.send({ message: "email has been sent:" })
+    // else if (user) {
+    //   sendEmail(user.email,
+    //     {
+    //       subject: "demo", 
+    //       text: "hi",
+    //        html: "and easy to do anywhere, even with Node.js",
+    //     }
+    //   )
+
+    // }
+
+    // user && res.send({ message: "email has been sent:" })
 
     //if user is not found
-    !user && res.send({
-      message: "email has been sent:"
-    })
+    // !user && res.send({
+    //   message: "email has been sent:"
+    // })
 
 
   } catch (error) {
