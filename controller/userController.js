@@ -81,41 +81,41 @@ const changePassword = async (req, res) => {
 
 const ForgetPasswordReq = async (req, res) => {
   try {
+
     const { email } = req.body;
-    console.log(req.body);
     const user = await User.findOne({ email });
 
-    // console.log(user);
-
     if (user) {
-      sendEmail(user.email,
+
+      const token = await signToken(user);
+      const url = `http://localhost:5055`;
+      const link = `${url}/api/user/forget-password/${email}/${token}`
+
+      await sendEmail(user.email,
         {
-          subject: "demo",
-          text: "hi",
-          html: "and easy to do anywhere, even with Node.js",
+          subject: "Kharreedlo",
+          text: "Forget Password",
+          html: `<h4>Click on the link to change your password</h4><br>${link}`,
         }
-      )
+      );
 
     }
 
-    user && res.send({ message: "email has been sent:" })
-
-    //if user is not found
-    !user && res.send({
-      message: "email has been sent:"
-    })
-
+    res.status(200).send({
+      message: 'Email sent successfully!',
+    });
 
   } catch (error) {
-    console.log(error);
-
+    res.status(500).send({
+      message: error.message | "Network Error",
+    });
   }
 }
 
 const forgetPasswordVerify = async (req, res) => {
 
   const { token, email } = req.params;
-
+  // console.log(token, email);
   try {
 
     await jwt.verify(token, process.env.JWT_SECRET);

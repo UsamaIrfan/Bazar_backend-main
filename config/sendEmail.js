@@ -5,11 +5,11 @@ const sendEmail = async (to, data) => {
 
   const { subject, text, html } = data;
 
-  sgMail.setApiKey("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")
+  sgMail.setApiKey("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")
 
   const msg = {
     to: "syedfaizan.dev@gmail.com", // Change to your recipient
-    from: "khareedlo@tecizeverything.com", // Change to your verified sender
+    from: "mmhamza@tecizeverything.com", // Change to your verified sender
     subject,
     text,
     html
