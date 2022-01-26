@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { signToken } = require('../config/auth');
+const { sendEmail } = require('../config/sendEmail')
 
 const registerUser = async (req, res) => {
   try {
@@ -77,7 +78,38 @@ const changePassword = async (req, res) => {
   }
 };
 
+const ForgetPasswordReq = async (req, res) => {
+  try {
+    const { email } = req.body;
+    console.log(req.body);
+    const user = await User.findOne({ email });
+    
+    // console.log(user);
 
+    if (user) {
+      sendEmail(user.email,
+        {
+          subject: "demo", 
+          text: "hi",
+           html: "and easy to do anywhere, even with Node.js",
+        }
+      )
+
+    }
+
+    user && res.send({ message: "email has been sent:" })
+
+    //if user is not found
+    !user && res.send({
+      message: "email has been sent:"
+    })
+
+
+  } catch (error) {
+    console.log(error);
+
+  }
+}
 
 
 
@@ -90,9 +122,9 @@ const changePassword = async (req, res) => {
 const signUpWithProvider = async (req, res) => {
   try {
     const isAdded = await User.findOne({ email: req.body.email });
-  if (isAdded) {
+    if (isAdded) {
       const token = signToken(isAdded);
-      
+
       res.send({
         token,
         _id: isAdded._id,
@@ -101,7 +133,7 @@ const signUpWithProvider = async (req, res) => {
         address: isAdded.address,
         phone: isAdded.phone,
         image: isAdded.image,
-        });
+      });
     } else {
       const newUser = new User({
         name: req.body.name,
@@ -197,4 +229,5 @@ module.exports = {
   getUserById,
   updateUser,
   deleteUser,
+  ForgetPasswordReq
 };
