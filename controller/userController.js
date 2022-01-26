@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { signToken } = require('../config/auth');
+const { sendEmail } = require('../config/sendEmail')
 
 const registerUser = async (req, res) => {
   try {
@@ -78,21 +80,95 @@ const changePassword = async (req, res) => {
 };
 
 
+const ForgetPasswordReq = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (user) {
+
+      const token = await signToken(user);
+      const url = `https://bazar-mongodb.herokuapp.com`;
+      const link = `${url}/api/user/forget-password/${email}/${token}`
+
+      sendEmail(
+        user.email,
+        {
+          subject: "Kharreedlo",
+          text: "Forget Password",
+          html: `<h4>Click on the link to change your password</h4><br>${link}`,
+        }
+      )
+    }
+
+    res.status(200).send({
+      message: 'Email sent successfully!',
+    });
+
+  } catch (error) {
+    res.status(500).send({
+      message: "Network Error",
+    });
+  }
+}
+
+const forgetPasswordVerify = async (req, res) => {
+
+  const { token, email } = req.params;
+  // console.log(token, email);
+  try {
+
+    await jwt.verify(token, process.env.JWT_SECRET);
+    res.status(301).redirect(
+      `https://www.kharreedlo.com?forgetPassword=true&token=${token}&email=${email}`
+    );
+
+  } catch (error) {
+    res.status(401).send({
+      message: "Invalid Token"
+    })
+  }
+
+};
 
 
+const resetPassword = async (req, res) => {
 
+  const { token, newPassword } = req.body
 
+  try {
 
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    // console.log(user);
 
+    const PasswordHash = bcrypt.hashSync(newPassword);
+    // console.log(PasswordHash);
 
+    await User.updateOne({ _id: user._id }, {
+      $set: {
+        password: PasswordHash
+      }
+    }, { runValidators: true });
+
+    res.status(200).send({
+      message: 'Your password change successfully!',
+    });
+
+  } catch (error) {
+    res.status(401).send({
+      message: "Invalid Token",
+    })
+  }
+
+}
 
 
 const signUpWithProvider = async (req, res) => {
   try {
     const isAdded = await User.findOne({ email: req.body.email });
-  if (isAdded) {
+    if (isAdded) {
       const token = signToken(isAdded);
-      
+
       res.send({
         token,
         _id: isAdded._id,
@@ -101,7 +177,7 @@ const signUpWithProvider = async (req, res) => {
         address: isAdded.address,
         phone: isAdded.phone,
         image: isAdded.image,
-        });
+      });
     } else {
       const newUser = new User({
         name: req.body.name,
@@ -197,4 +273,7 @@ module.exports = {
   getUserById,
   updateUser,
   deleteUser,
+  ForgetPasswordReq,
+  forgetPasswordVerify,
+  resetPassword
 };
