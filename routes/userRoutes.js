@@ -11,7 +11,7 @@ const {
   deleteUser,
   ForgetPasswordReq,
   forgetPasswordVerify,
-  resetMyPasswords
+  resetPassword
 } = require('../controller/userController');
 
 //register a user
@@ -43,8 +43,6 @@ router.post('/forget-password-email', ForgetPasswordReq);
 
 router.get('/forget-password/:email/:token', forgetPasswordVerify)
 
-// router.get('/forget-password', forgetPasswordVerify)
-
-router.post('/reset-password' ,resetMyPasswords)
+router.post('/reset-password', resetPassword)
 
 module.exports = router;

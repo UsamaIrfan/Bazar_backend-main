@@ -82,24 +82,23 @@ const changePassword = async (req, res) => {
 
 const ForgetPasswordReq = async (req, res) => {
   try {
-
     const { email } = req.body;
     const user = await User.findOne({ email });
 
     if (user) {
 
       const token = await signToken(user);
-      const url = `http://localhost:5055`;
+      const url = `https://bazar-mongodb.herokuapp.com`;
       const link = `${url}/api/user/forget-password/${email}/${token}`
 
-      await sendEmail(user.email,
+      sendEmail(
+        user.email,
         {
           subject: "Kharreedlo",
           text: "Forget Password",
           html: `<h4>Click on the link to change your password</h4><br>${link}`,
         }
-      );
-
+      )
     }
 
     res.status(200).send({
@@ -108,7 +107,7 @@ const ForgetPasswordReq = async (req, res) => {
 
   } catch (error) {
     res.status(500).send({
-      message: error.message | "Network Error",
+      message: "Network Error",
     });
   }
 }
@@ -133,41 +132,35 @@ const forgetPasswordVerify = async (req, res) => {
 };
 
 
-const resetMyPasswords = async (req, res) => {
- 
-  const { email, token, newPassword } = req.body
+const resetPassword = async (req, res) => {
 
-  const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-  if(!decoded){
-    res.send({ message : "Invalid Token"})
-  }
+  const { token, newPassword } = req.body
 
-  const user = await User.findOne({ email })
-  if (!user) {
-    res.status(200).send({
-      message: 'For change password,You need to sign in with email ',
-    });
-  }
+  try {
 
-  if (user) {
-    newPassword = bcrypt.hashSync(req.body.newPassword);
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    // console.log(user);
 
-    await User.findByIdAndUpdate(user._id, {
-      password: newPassword
-    })
+    const PasswordHash = bcrypt.hashSync(newPassword);
+    // console.log(PasswordHash);
+
+    await User.updateOne({ _id: user._id }, {
+      $set: {
+        password: PasswordHash
+      }
+    }, { runValidators: true });
 
     res.status(200).send({
       message: 'Your password change successfully!',
     });
 
-  }
-  else {
+  } catch (error) {
     res.status(401).send({
-      message: 'Invalid email or current password!',
-    });
+      message: "Invalid Token",
+    })
   }
-}
 
+}
 
 
 const signUpWithProvider = async (req, res) => {
@@ -282,5 +275,5 @@ module.exports = {
   deleteUser,
   ForgetPasswordReq,
   forgetPasswordVerify,
-  resetMyPasswords
+  resetPassword
 };
