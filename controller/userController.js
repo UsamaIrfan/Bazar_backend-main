@@ -136,7 +136,9 @@ const forgetPasswordVerify = async (req, res) => {
   try {
 
     await jwt.verify(token, process.env.JWT_SECRET);
-    res.status(301).redirect(`https://www.kharreedlo.com?forgetPassword=true&token=${token}&email=${email}`);
+    res.status(301).redirect(
+      `https://www.kharreedlo.com?forgetPassword=true&token=${token}&email=${email}`
+    );
 
   } catch (error) {
     res.status(401).send({
@@ -146,6 +148,41 @@ const forgetPasswordVerify = async (req, res) => {
 
 };
 
+
+const resetMyPasswords = async (req, res) => {
+
+  const { email, token, newPassword } = req.body
+
+  const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+  if(!decoded){
+    res.send({ message : "Invalid Token"})
+  }
+
+  const user = await User.findOne({ email })
+  if (!user) {
+    res.status(200).send({
+      message: 'For change password,You need to sign in with email ',
+    });
+  }
+
+  if (user) {
+    newPassword = bcrypt.hashSync(req.body.newPassword);
+
+    await User.findByIdAndUpdate(id, {
+      password: newPassword
+    })
+
+    res.status(200).send({
+      message: 'Your password change successfully!',
+    });
+
+  }
+  else {
+    res.status(401).send({
+      message: 'Invalid email or current password!',
+    });
+  }
+}
 
 
 
@@ -260,5 +297,6 @@ module.exports = {
   updateUser,
   deleteUser,
   ForgetPasswordReq,
-  forgetPasswordVerify
+  forgetPasswordVerify,
+  resetMyPasswords
 };
