@@ -15,20 +15,20 @@ const categoryData = require('./utils/category');
 connectDB();
 const importData = async () => {
   try {
-    // await User.deleteMany();
-    // await User.insertMany(userData);
+    await User.deleteMany();
+    await User.insertMany(userData);
 
-    // await Admin.deleteMany();
-    // await Admin.insertMany(adminData);
+    await Admin.deleteMany();
+    await Admin.insertMany(adminData);
 
     await Product.deleteMany();
     await Product.insertMany(productData);
 
-    // await Category.deleteMany();
-    // await Category.insertMany(categoryData);
+    await Category.deleteMany();
+    await Category.insertMany(categoryData);
 
-    // await Coupon.deleteMany();
-    // await Coupon.insertMany(couponData);
+    await Coupon.deleteMany();
+    await Coupon.insertMany(couponData);
 
     console.log('data inserted successfully!');
     process.exit();

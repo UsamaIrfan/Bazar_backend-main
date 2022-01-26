@@ -36,7 +36,7 @@ const adminSchema = new mongoose.Schema(
     password: {
       type: String,
       required: false,
-      default: bcrypt.hashSync("12345678"),
+      // default: bcrypt.hashSync("12345678"),
     },
     role: {
       type: String,

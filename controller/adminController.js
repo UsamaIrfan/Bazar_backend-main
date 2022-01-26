@@ -24,19 +24,19 @@ const loginAdmin = async (req, res) => {
   }
 };
 
-const addStaff = async (req, res) => {
-  try {
-    const newStaff = new Admin(req.body.staffData);
-    await newStaff.save();
-    res.status(200).send({
-      message: 'Staff Added Successfully!',
-    });
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
+// const addStaff = async (req, res) => {
+//   try {
+//     const newStaff = new Admin(req.body.staffData);
+//     await newStaff.save();
+//     res.status(200).send({
+//       message: 'Staff Added Successfully!',
+//     });
+//   } catch (err) {
+//     res.status(500).send({
+//       message: err.message,
+//     });
+//   }
+// };
 
 const getAllStaff = async (req, res) => {
   try {
@@ -95,7 +95,6 @@ const deleteStaff = (req, res) => {
 
 module.exports = {
   loginAdmin,
-  addStaff,
   getAllStaff,
   getStaffById,
   updateStaff,

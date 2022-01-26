@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { signToken } = require('../config/auth');
 const { sendEmail } = require('../config/sendEmail')
@@ -88,7 +89,16 @@ const ForgetPasswordReq = async (req, res) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
 
-    if(user){
+    // if (user) {
+    //   sendEmail(user.email,
+    //     {
+    //       subject: "demo",
+    //       text: "hi",
+    //       html: "and easy to do anywhere, even with Node.js",
+    //     }
+    //   )
+
+    if (user) {
       const token = signToken(user);
       res.send({
         token,
@@ -116,14 +126,25 @@ const ForgetPasswordReq = async (req, res) => {
 
   } catch (error) {
     console.log(error);
-
   }
 }
 
+const forgetPasswordVerify = async (req, res) => {
 
+  const { token, email } = req.params;
 
+  try {
 
+    await jwt.verify(token, process.env.JWT_SECRET);
+    res.status(301).redirect(`https://www.kharreedlo.com?forgetPassword=true&token=${token}&email=${email}`);
 
+  } catch (error) {
+    res.status(401).send({
+      message: "Invalid Token"
+    })
+  }
+
+};
 
 
 
@@ -238,5 +259,6 @@ module.exports = {
   getUserById,
   updateUser,
   deleteUser,
-  ForgetPasswordReq
+  ForgetPasswordReq,
+  forgetPasswordVerify
 };
