@@ -1,15 +1,15 @@
 const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 
 const sendEmail = async (to, data) => {
 
   const { subject, text, html } = data;
 
+  sgMail.setApiKey("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")
 
   const msg = {
     to: "syedfaizan.dev@gmail.com", // Change to your recipient
-    from: process.env.SENDGRID_EMAIL, // Change to your verified sender
+    from: "khareedlo@tecizeverything.com", // Change to your verified sender
     subject,
     text,
     html
@@ -27,5 +27,5 @@ const sendEmail = async (to, data) => {
 
 }
 
-module.exports ={sendEmail}
+module.exports = { sendEmail }
 
