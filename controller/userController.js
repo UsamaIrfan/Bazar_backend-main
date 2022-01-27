@@ -38,23 +38,40 @@ const registerUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const user = await User.findOne({ email: req.body.email });
-  if (user && bcrypt.compareSync(req.body.password, user.password)) {
-    const token = signToken(user);
-    res.send({
-      token,
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      address: user.address,
-      phone: user.phone,
-      image: user.image,
-    });
-  } else {
-    res.status(401).send({
-      message: 'Invalid user or password!',
+
+  try {
+
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) return next(new ErrorResponse(`Invalid email or password!`, 404));
+    // console.log(user);
+
+    const isCorrect = await user.matchPassword(req.body.password);
+    if (!isCorrect) return next(new ErrorResponse(`Invalid user password`, 500));
+    // console.log(isCorrect);
+
+    if (user && isCorrect) {
+      const token = signToken(user);
+      res.send({
+        token,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        address: user.address,
+        phone: user.phone,
+        image: user.image,
+      });
+    } else {
+      res.status(401).send({
+        message: 'Invalid user or password!',
+      });
+    }
+
+  } catch (error) {
+    res.status(500).send({
+      message: "Network Error",
     });
   }
+
 };
 
 const changePassword = async (req, res) => {
