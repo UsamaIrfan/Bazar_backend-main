@@ -21,6 +21,14 @@ const registerUser = async (req, res) => {
 
       const user = await newUser.save();
       const token = signToken(user);
+      sendEmail(
+        user.email,
+        {
+          subject: "Kharreedlo",
+          text: "Email Verification",
+          // html: `<h4>Click on the link to change your password</h4><br>${link}`,
+        }
+      )
       res.send({
         token,
         _id: user._id,
