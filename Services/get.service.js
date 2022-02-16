@@ -108,7 +108,10 @@ const AdvanceFetch = (model, populate) => async (
         const data = await FindQuery;
         res.advanceFetch = {
             success: true,
-            pagination,
+            pagination: {
+                ...pagination,
+                total: data.length,
+            },
             entities: data,
         };
         // console.log(res.advanceFetch)
