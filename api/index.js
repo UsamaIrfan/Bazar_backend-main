@@ -86,17 +86,15 @@ app.use('/api/admin/', adminRoutes);
 app.use('/api/orders/', isAuth, orderRoutes);
 
 // handle unhandled routes
-app.all('*', (req, res, next) => {
-  
-  next(new ErrorResponse(`Can't find ${req.originalUrl} on this server!`, 404));
-    return res.json({
-      message: 'route not found',    
-    })
-  })
+// app.all('*', (req, res, next) => {
+
+//   next(new ErrorResponse(`Can't find ${req.originalUrl} on this server!`, 404));
+//   })
 
 
 app.use(NotFound);
-app.use(ErrorHandler)
+// app.use(ErrorHandler)
+ErrorHandler(app)
 
 
 const PORT = process.env.PORT || 5000;
