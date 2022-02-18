@@ -2,10 +2,15 @@ const HttpException = require("../utils/ErrorResponse")
 
 const ErrorHandler = (router) => {
     router.use((err, req, res, next) => {
-        console.log(JSON.stringify(err, null, 2))
-
+        // console.log(JSON.stringify(err, null, 2))
         let errors = []
-
+        
+        //request resource not foundation
+        if (err.name === "CastError") {
+            err = new HttpException(404, "Resource not found")
+            }
+        
+        
         // API Not Found
         if (err.message === "Not Found") {
             err = new HttpException(404, "Not Found");
@@ -49,11 +54,12 @@ const ErrorHandler = (router) => {
 
 
         res
-            .status(err.status || 500)
+            .status(err.statusCode || 500)
             .json({
-                status: err.status || 500,
+                status: err.statusCode || 500,
                 message: err.message || "Server Error",
-                errors: err.errors || []
+                errors: err.errors || [],
+                
             })
     });
 }
