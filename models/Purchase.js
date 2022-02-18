@@ -49,6 +49,16 @@ const purchaseSchema = new mongoose.Schema(
             ref: 'Vendor',
             required: true,
         },
+        orderAt: {
+            type: Date,
+            default: Date.now,
+            required: true,
+        },
+        receivedAt: {
+            type: Date,
+            default: Date.now,
+            required: true, 
+        }
     },
     {
         timestamps: true,

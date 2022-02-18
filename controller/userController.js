@@ -16,6 +16,7 @@ const registerUser = async (req, res) => {
         name: req.body.name,
         email: req.body.email,
         phone: req.body.phone,
+        nic: req.body.nic,
         password: bcrypt.hashSync(req.body.password),
       });
 
@@ -256,6 +257,7 @@ const updateUser = async (req, res) => {
       user.address = req.body.address;
       user.phone = req.body.phone;
       user.image = req.body.image;
+      user.nic = req.body.nic;
       const updatedUser = await user.save();
       const token = signToken(updatedUser);
       res.send({
@@ -266,6 +268,7 @@ const updateUser = async (req, res) => {
         address: updatedUser.address,
         phone: updatedUser.phone,
         image: updatedUser.image,
+        nic: updatedUser.nic,
       });
     }
   } catch (err) {

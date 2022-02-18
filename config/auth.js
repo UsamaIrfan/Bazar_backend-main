@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 
 const signToken = (user) => {
+  // console.log("user", user);
   return jwt.sign(
     {
       _id: user._id,
@@ -11,6 +12,7 @@ const signToken = (user) => {
       address: user.address,
       phone: user.phone,
       image: user.image,
+      role: user.role || "User",
     },
     process.env.JWT_SECRET,
     {
@@ -21,10 +23,14 @@ const signToken = (user) => {
 
 const isAuth = async (req, res, next) => {
   const { authorization } = req.headers;
+  // console.log(authorization);
+  if (!authorization) res.status(400).json({ message: 'You are not logged in' });
   try {
     const token = authorization.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
+    // console.log("decoded", JSON.stringify(decoded));
+    // console.log("token", token)
     next();
   } catch (err) {
     res.status(401).send({
@@ -34,17 +40,42 @@ const isAuth = async (req, res, next) => {
 };
 
 const isAdmin = async (req, res, next) => {
-  console.log(req.body);
-  const admin = await Admin.findOne({ email: req.body.email });
-  console.log(admin);
-  if (admin.role === 'Admin') {
-    next();
-  } else {
+  const { authorization } = req.headers;
+  if (!authorization) res.status(400).json({ message: 'You are not logged in' });
+
+  try {
+    const token = authorization.split(' ')[1];
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    // console.log("decoded", JSON.stringify(decoded, null, 2));
+    // console.log("token", token)
+
+    req.user = decoded;
+
+    const admin = await Admin.findById(decoded._id);
+    if (!admin || admin.role !== 'Admin') {
+      return res.status(401).json({
+        message: 'You are not authorized to perform this action',
+      });
+    }
+
+    next()
+  } catch (error) {
     res.status(401).send({
-      message: 'User is not Admin',
+      message: 'UnAuthorized',
     });
   }
+
+  // const admin = await Admin.findOne({ email: req.body.email });
+  // console.log(admin);
+  // if (admin.role === 'Admin') {
+  //   next();
+  // } else {
+  //   res.status(401).send({
+  //     message: 'User is not Admin',
+  //   });
+  // }
 };
+
 module.exports = {
   signToken,
   isAuth,
