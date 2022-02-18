@@ -4,16 +4,17 @@ const ErrorHandler = (router) => {
     router.use((err, req, res, next) => {
         // console.log(JSON.stringify(err, null, 2))
         let errors = []
-        
+
         //request resource not foundation
         if (err.name === "CastError") {
             err = new HttpException(404, "Resource not found")
-            }
-        
-        
+        }
+
+
         // API Not Found
         if (err.message === "Not Found") {
-            err = new HttpException(404, "Not Found");
+            // console.log('======>', err.message)
+            err = new HttpException( "Not Found");
         }
 
         // API Not Found
@@ -59,7 +60,7 @@ const ErrorHandler = (router) => {
                 status: err.statusCode || 500,
                 message: err.message || "Server Error",
                 errors: err.errors || [],
-                
+
             })
     });
 }
