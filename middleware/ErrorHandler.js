@@ -14,7 +14,7 @@ const ErrorHandler = (router) => {
         // API Not Found
         if (err.message === "Not Found") {
             // console.log('======>', err.status)
-            err = new HttpException( "Not Found" , 404);
+            err = new HttpException( 404 , "Not Found");
         }
 
         // API Not Found
