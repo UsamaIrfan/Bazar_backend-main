@@ -1,4 +1,4 @@
-const Otp = require("twilio");
+import Otp from "twilio";
 
 const sendOtp = async (to, data) => {
     const { subject, text, html } = data;
@@ -20,4 +20,4 @@ const sendOtp = async (to, data) => {
     
     };
 
-module.exports = { sendOtp };
+export default { sendOtp };
