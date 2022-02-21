@@ -10,7 +10,7 @@ const sendOtp = async (to, data) => {
         text,
         html
     })
-        sendOtp.send(message)
+        Otp.send(message)
         .then((_response) => {
             return { success: true }
         })
