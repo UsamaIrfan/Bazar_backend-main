@@ -35,7 +35,7 @@ const orderSchema = new mongoose.Schema(
     },
     zipCode: {
       type: String,
-      required: true,
+      // required: true,
     },
     subTotal: {
       type: Number,

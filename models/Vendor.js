@@ -7,6 +7,11 @@ const vendorSchema = new mongoose.Schema(
       ref: 'Admin',
       required: true,
     },
+    nic: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     name: {
       type: String,
       required: true,
@@ -25,7 +30,10 @@ const vendorSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
+    image: {
+      type: String,
+      required: true,
+    },
     city: {
       type: String,
       required: true,
