@@ -53,6 +53,7 @@ const getProductBySlug = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
+    
     const product = await Product.findById(req.params.id);
     res.send(product);
   } catch (err) {

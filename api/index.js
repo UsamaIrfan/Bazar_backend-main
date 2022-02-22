@@ -18,6 +18,7 @@ const cookieSession = require('cookie-session')
 require('../config/passport-setup')
 const passport = require('passport');
 const ErrorHandler = require('../middleware/ErrorHandler')
+const ErrorResponse = require('../utils/ErrorResponse')
 const NotFound = require('../routes/404')
 const helmet = require("helmet");
 // const session = require('express-session')
@@ -25,7 +26,6 @@ const helmet = require("helmet");
 
 connectDB();
 const app = express();
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
@@ -87,8 +87,17 @@ app.use('/api/shippings/', shippingRoutes);
 app.use('/api/admin/', adminRoutes);
 app.use('/api/orders/', isAuth, orderRoutes);
 
+// handle unhandled routes
+// app.all('*', (req, res, next) => {
+
+//   next(new ErrorResponse(`Can't find ${req.originalUrl} on this server!`, 404));
+//   })
+
+
 app.use(NotFound);
-app.use(ErrorHandler)
+// app.use(ErrorHandler)
+ErrorHandler(app)
+
 
 const PORT = process.env.PORT || 5000;
 

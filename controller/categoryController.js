@@ -1,5 +1,6 @@
 const Category = require('../models/Category');
 
+
 const addCategory = async (req, res) => {
   try {
     const newCategory = new Category(req.body);
@@ -39,7 +40,7 @@ const getAllCategory = async (req, res) => {
   }
 };
 
-const getCategoryById = async (req, res) => {
+const getCategoryById = async (req, res, next) => {
   try {
     const category = await Category.findById(req.params.id);
     res.send(category);
@@ -47,8 +48,10 @@ const getCategoryById = async (req, res) => {
     res.status(500).send({
       message: err.message,
     });
+
   }
 };
+
 
 const updateCategory = async (req, res) => {
   try {
