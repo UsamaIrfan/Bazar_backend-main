@@ -41,7 +41,7 @@ const isAuth = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
   const { authorization } = req.headers;
-  if (!authorization) res.status(400).json({ message: 'You are not logged in' });
+  if (!authorization) return res.status(400).json({ message: 'You are not logged in' });
 
   try {
     const token = authorization.split(' ')[1];
@@ -64,16 +64,6 @@ const isAdmin = async (req, res, next) => {
       message: 'UnAuthorized',
     });
   }
-
-  // const admin = await Admin.findOne({ email: req.body.email });
-  // console.log(admin);
-  // if (admin.role === 'Admin') {
-  //   next();
-  // } else {
-  //   res.status(401).send({
-  //     message: 'User is not Admin',
-  //   });
-  // }
 };
 
 module.exports = {

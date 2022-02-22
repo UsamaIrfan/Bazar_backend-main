@@ -1,104 +1,166 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const OTP = require('../models/Otp')
 const { signToken } = require('../config/auth');
 const { sendEmail } = require('../config/sendEmail')
+const ErrorResponse = require('../utils/ErrorResponse');
+const { isValidateEmail, ChangePasswordValidation, RegisterUserValidation } = require('../utils/valid');
+const asyncHandler = require('../middleware/async');
 
-const registerUser = async (req, res) => {
-  try {
-    const isAdded = await User.findOne({ email: req.body.email });
-    if (isAdded) {
-      res.status(401).send({
-        message: 'This Email already Added!',
-      });
-    } else {
-      const newUser = new User({
-        name: req.body.name,
-        email: req.body.email,
-        phone: req.body.phone,
-        nic: req.body.nic,
-        password: bcrypt.hashSync(req.body.password),
-      });
 
-      const user = await newUser.save();
-      const token = signToken(user);
-      sendEmail(
-        user.email,
-        {
-          subject: "Kharreedlo",
-          text: "Email Verification",
-          // html: `<h4>Click on the link to change your password</h4><br>${link}`,
-        }
-      )
-      res.send({
-        token,
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        image: user.image,
-      });
-    }
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
+
+const registerUser = asyncHandler(async (req, res, next) => {
+
+  const isValid = await RegisterUserValidation(req.body)
+  if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
+
+  const salt = bcrypt.genSaltSync(10);
+  const password = bcrypt.hashSync(req.body.password, salt);
+
+  const newUser = {
+    name: req.body.name,
+    email: req.body.email,
+    phone: req.body.phone,
+    nic: req.body.nic,
+    verified: false,
+    password,
   }
-};
+  const date = new Date();
+  date.setMinutes(date.getMinutes() + 10);
 
-const loginUser = async (req, res) => {
+  const user = await User.create({ ...newUser });
+  if (!user) return next(new ErrorResponse(401, `User not created!`));
 
-  try {
-
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) return next(new ErrorResponse(`Invalid email or password!`, 404));
-    // console.log(user);
-
-    const isCorrect = await user.matchPassword(req.body.password);
-    if (!isCorrect) return next(new ErrorResponse(`Invalid user password`, 500));
-    // console.log(isCorrect);
-
-    if (user && isCorrect) {
-      const token = signToken(user);
-      res.send({
-        token,
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        address: user.address,
-        phone: user.phone,
-        image: user.image,
-      });
-    } else {
-      res.status(401).send({
-        message: 'Invalid user or password!',
-      });
-    }
-
-  } catch (error) {
-    res.status(500).send({
-      message: "Invalid user or password!",
-    });
+  const newOTP = {
+    user: user._id,
+    type: 'register',
+    expiration: date,
   }
 
-};
+  const otp = await OTP.create({ ...newOTP });
+  if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
+  // console.log(otp)
+  res.send({ message: 'User created successfully!' });
 
-const changePassword = async (req, res) => {
+});
+
+const userVerify = asyncHandler(async (req, res, next) => {
+
+  const otp = await OTP.findOne({ otp: req.params.otp, type: 'register' });
+  // console.log(otp)
+  if (!otp) return next(new ErrorResponse(401, `Invalid OTP!`));
+  if (new Date(otp.expiration) <= new Date()) return next(new ErrorResponse(401, `OTP Expire!`))
+
+  const user = await User.findByIdAndUpdate(
+    otp.user,
+    { $set: { verified: true } },
+    {
+      runValidators: true,
+      new: true
+    }
+  ).populate('user');
+
+  await OTP.deleteOne({ otp: req.params.otp, type: 'register' })
+  // console.log(user)
+  const token = signToken(user);
+
+  res.send({
+    token,
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    image: user.image,
+  });
+
+})
+
+const loginUser = asyncHandler(async (req, res, next) => {
+
+  let user = {}
+
+  if (isValidateEmail(req.body.user)) {
+    console.log('login with email')
+    user = await User.findOne({ email: req.body.user });
+    if (!user) return next(new ErrorResponse(404, `Invalid email or password!`));
+  } else {
+    console.log('login with phone')
+    user = await User.findOne({ phone: req.body.user });
+    if (!user) return next(new ErrorResponse(404, `Invalid phone or password!`));
+  }
+  console.log(user);
+
+  const isCorrect = await user.matchPassword(req.body.password);
+  if (!isCorrect) return next(new ErrorResponse(401, `Invalid credentials!`));
+  // console.log(isCorrect);
+
+  const date = new Date();
+  date.setMinutes(date.getMinutes() + 10);
+  const newOTP = {
+    user: user._id,
+    type: 'login',
+    expiration: date,
+  }
+
+  const otp = await OTP.create({ ...newOTP });
+  if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
+
+  res.send({ message: "verify your OTP!" });
+
+  next();
+});
+
+const loginOTPVerify = asyncHandler(async (req, res, next) => {
+
+  const otp = await OTP.findOne({ otp: req.params.otp, type: 'login' });
+  if (!otp) return next(new ErrorResponse(401, `Invalid OTP!`));
+  if (new Date(otp.expiration) <= new Date()) return next(new ErrorResponse(401, `OTP Expire!`))
+
+  const user = await User.findById(otp.user);
+  await OTP.deleteOne({ otp: req.params.otp, type: 'login' })
+
+  const token = signToken(user);
+
+  res.send({
+    token,
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    image: user.image,
+  });
+
+})
+
+
+const changePassword = async (req, res, next) => {
+
+  const isValid = await ChangePasswordValidation(req.body)
+  if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
+
   const user = await User.findOne({ email: req.body.email });
-  if (!user.password) {
+
+  if (!user) {
+    res.status(500).send({
+      message: 'Invalid email or current password!',
+    });
+  }
+  else if (!user.password) {
     res.status(200).send({
       message: 'For change password,You need to sign in with email & password!',
     });
-  } else if (
-    user &&
-    bcrypt.compareSync(req.body.currentPassword, user.password)
-  ) {
-    user.password = bcrypt.hashSync(req.body.newPassword);
+  }
+  else if (user && bcrypt.compareSync(req.body.currentPassword, user.password)) {
+    const salt = bcrypt.genSaltSync(10);
+    const password = bcrypt.hashSync(req.body.newPassword, salt);
+    user.password = password;
     await user.save();
     res.status(200).send({
       message: 'Your password change successfully!',
     });
-  } else {
+  }
+  else {
     res.status(401).send({
       message: 'Invalid email or current password!',
     });
@@ -303,5 +365,7 @@ module.exports = {
   deleteUser,
   ForgetPasswordReq,
   forgetPasswordVerify,
-  resetPassword
+  resetPassword,
+  userVerify,
+  loginOTPVerify,
 };

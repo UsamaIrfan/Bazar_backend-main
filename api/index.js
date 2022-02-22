@@ -74,14 +74,14 @@ app.get('/logout', (req, res) => {
 })
 
 //this for route will need for store front, also for admin dashboard
-app.use('/api/products/', isAdmin, productRoutes);
-app.use('/api/category/', isAdmin, categoryRoutes);
-app.use('/api/coupon/', isAdmin, couponRoutes);
+app.use('/api/products/', productRoutes);
+app.use('/api/category/', categoryRoutes);
+app.use('/api/coupon/', couponRoutes);
 app.use('/api/user/', userRoutes);
 app.use('/api/order/', isAuth, userOrderRoutes);
 app.use('/api/vendors/', isAdmin, vendorRoutes);
 app.use('/api/purchases/', isAdmin, purchaseRoutes);
-app.use('/api/shippings/', isAdmin, shippingRoutes);
+app.use('/api/shippings/', shippingRoutes);
 
 //if you not use admin dashboard then these two route will not needed.
 app.use('/api/admin/', adminRoutes);
