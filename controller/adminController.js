@@ -4,10 +4,20 @@ const utc = require('dayjs/plugin/utc');
 const Admin = require('../models/Admin');
 const { signToken } = require('../config/auth');
 const asyncHandler = require('../middleware/async')
+const ErrorResponse = require('../utils/ErrorResponse');
+const {
+  RegisterAdminValidation,
+  LoginAdminValidation,
+  ChangePasswordAdminValidation,
+} = require('../utils/valid');
 dayjs.extend(utc);
 
-const loginAdmin = asyncHandler(async (req, res) => {
-  const admin = await Admin.findOne({ email: req.body.email });
+const loginAdmin = asyncHandler(async (req, res, next) => {
+
+  const isValid = await LoginAdminValidation(req.body)
+  if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
+
+  const admin = await Admin.findOne({ userName: req.body.userName });
   if (admin && bcrypt.compareSync(req.body.password, admin.password)) {
     const token = signToken(admin);
     res.send({
@@ -15,12 +25,11 @@ const loginAdmin = asyncHandler(async (req, res) => {
       _id: admin._id,
       name: admin.name,
       phone: admin.phone,
-      email: admin.email,
       image: admin.image,
     });
   } else {
     res.status(401).send({
-      message: 'Invalid Email or password!',
+      message: 'Invalid Credentials!',
     });
   }
 });
@@ -28,52 +37,21 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
 const registerAdmin = asyncHandler(async (req, res, next) => {
 
-  const isValid = await RegisterUserValidation(req.body)
+  const isValid = await RegisterAdminValidation(req.body)
   if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
 
+  const admin = await Admin.findOne({ userName: req.body.userName });
+  if (admin) return next(new ErrorResponse(400, 'Admin username already exists!'));
+
   const salt = bcrypt.genSaltSync(10);
-  const password = bcrypt.hashSync(req.body.password, salt);
+  req.body.password = bcrypt.hashSync(req.body.password, salt);
 
-  const newUser = {
-    name: req.body.name,
-    email: req.body.email,
-    phone: req.body.phone,
-    nic: req.body.nic,
-    verified: false,
-    password,
-  }
-  const date = new Date();
-  date.setMinutes(date.getMinutes() + 10);
+  const user = await Admin.create({ ...req.body });
+  if (!user) return next(new ErrorResponse(401, `Admin not created!`));
 
-  const user = await User.create({ ...newUser });
-  if (!user) return next(new ErrorResponse(401, `User not created!`));
-
-  const newOTP = {
-    user: user._id,
-    type: 'register',
-    expiration: date,
-  }
-
-  const otp = await OTP.create({ ...newOTP });
-  if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
-  // console.log(otp)
   res.send({ message: 'User created successfully!' });
 
 });
-
-// const addStaff = async (req, res) => {
-//   try {
-//     const newStaff = new Admin(req.body.staffData);
-//     await newStaff.save();
-//     res.status(200).send({
-//       message: 'Staff Added Successfully!',
-//     });
-//   } catch (err) {
-//     res.status(500).send({
-//       message: err.message,
-//     });
-//   }
-// };
 
 const getAllStaff = async (req, res) => {
   try {
@@ -95,40 +73,55 @@ const getStaffById = async (req, res) => {
   }
 };
 
-const updateStaff = async (req, res) => {
-  try {
-    const admin = await Admin.findById(req.params.id);
-    if (admin) {
-      admin.name = req.body.data.name;
-      admin.email = req.body.data.email;
-      admin.phone = req.body.data.phone;
-      admin.role = req.body.data.role;
-      admin.joiningData = dayjs().utc().format(req.body.data.joiningDate);
-      admin.password = req.body.data.password
-        ? bcrypt.hashSync(req.body.data.password)
-        : admin.password;
-      admin.image = req.body.data.image;
-      await admin.save();
-      res.send({ message: 'Staff updated successfully!' });
-    }
-  } catch (err) {
-    res.status(404).send(err.message);
-  }
-};
+const updateStaff = asyncHandler(async (req, res, next) => {
+  const admin = await Admin.findById(req.params.id);
 
-const deleteStaff = (req, res) => {
-  Admin.deleteOne({ _id: req.params.id }, (err) => {
-    if (err) {
-      res.status(500).send({
-        message: err.message,
-      });
-    } else {
-      res.status(200).send({
-        message: 'Admin Deleted Successfully!',
-      });
-    }
+  if (admin) {
+
+    admin.name = req.body.data.name;
+    admin.email = req.body.data.email;
+    admin.phone = req.body.data.phone;
+    admin.role = req.body.data.role;
+    admin.joiningData = dayjs().utc().format(req.body.data.joiningDate);
+    admin.image = req.body.data.image;
+
+    await admin.save();
+
+    res.send({ message: 'updated successfully!' });
+  }
+
+});
+
+const deleteStaff = asyncHandler(async (req, res, next) => {
+  await Admin.deleteOne({ _id: req.params.id });
+  res.status(200).send({
+    message: 'Admin Deleted Successfully!',
   });
-};
+});
+
+const changePassword = asyncHandler(async (req, res, next) => {
+
+  const isValid = await ChangePasswordAdminValidation(req.body)
+  if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
+
+  const admin = await Admin.findOne({ userName: req.body.userName });
+
+  if (!admin) {
+    return next(new ErrorResponse(500, `Invalid username or current password!`))
+  }
+  else if (admin && bcrypt.compareSync(req.body.currentPassword, admin.password)) {
+    const salt = bcrypt.genSaltSync(10);
+    const password = bcrypt.hashSync(req.body.newPassword, salt);
+    admin.password = password;
+    await admin.save();
+    res.status(200).send({
+      message: 'Your password change successfully!',
+    });
+  }
+  else {
+    return next(new ErrorResponse(401, `Invalid username or current password!`))
+  }
+});
 
 module.exports = {
   loginAdmin,
@@ -136,4 +129,6 @@ module.exports = {
   getStaffById,
   updateStaff,
   deleteStaff,
+  registerAdmin,
+  changePassword,
 };

@@ -12,11 +12,11 @@ const signToken = (user) => {
       address: user.address,
       phone: user.phone,
       image: user.image,
-      role: user.role || "User",
+      role: user.roles || "User",
     },
     process.env.JWT_SECRET,
     {
-      expiresIn: '2d',
+      expiresIn: '1d',
     }
   );
 };
@@ -52,7 +52,7 @@ const isAdmin = async (req, res, next) => {
     req.user = decoded;
 
     const admin = await Admin.findById(decoded._id);
-    if (!admin || admin.role !== 'Admin') {
+    if (!admin || admin.roles.includes('Admin')) {
       return res.status(401).json({
         message: 'You are not authorized to perform this action',
       });

@@ -10,14 +10,14 @@ const sendOtp = async (to, data) => {
         text,
         html
     })
-        Otp.send(message)
+    Otp.send(message)
         .then((_response) => {
             return { success: true }
         })
         .catch((_error) => {
             return { success: false };
         })
-    
-    };
+
+};
 
 export default { sendOtp };
