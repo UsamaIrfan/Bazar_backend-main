@@ -24,8 +24,9 @@ const loginAdmin = asyncHandler(async (req, res, next) => {
       token,
       _id: admin._id,
       name: admin.name,
-      phone: admin.phone,
-      image: admin.image,
+      roles: admin.roles,
+      phone: '0000000000',
+      image: 'https://res.cloudinary.com/dzqbzqgqw/image/upload/v1599098981/avatar_default_qxqzqe.png',
     });
   } else {
     res.status(401).send({
