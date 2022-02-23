@@ -8,12 +8,8 @@ const {
   updateCoupon,
   deleteCoupon,
 } = require('../controller/couponController');
-
-//add a coupon
-router.post('/add', addCoupon);
-
-//add multiple coupon
-router.post('/all', addAllCoupon);
+const { isAdmin } = require('../config/auth');
+const { COUPON_ROLE } = require('../utils/roles');
 
 //get all coupon
 router.get('/', getAllCoupons);
@@ -21,10 +17,16 @@ router.get('/', getAllCoupons);
 //get a coupon
 router.get('/:id', getCouponById);
 
+//add a coupon
+router.post('/add', isAdmin(COUPON_ROLE), addCoupon);
+
+//add multiple coupon
+router.post('/all', isAdmin(COUPON_ROLE), addAllCoupon);
+
 //update a coupon
-router.put('/:id', updateCoupon);
+router.put('/:id', isAdmin(COUPON_ROLE), updateCoupon);
 
 //delete a coupon
-router.delete('/:id', deleteCoupon);
+router.delete('/:id', isAdmin(COUPON_ROLE), deleteCoupon);
 
 module.exports = router;

@@ -56,7 +56,7 @@ const LoginUserValidation = async (body) => {
 const RegisterAdminValidation = async (body) => {
     const schema = Joi.object({
         phone: Joi.string().min(11).max(12),
-        userName: Joi.string().min(6).max(8).required(),
+        userName: Joi.string().min(8).max(24).required(),
         password: Joi.string().min(6).max(54).required(),
         roles: Joi.array().items(Joi.string()).required(),
         name: Joi.string().required(),
