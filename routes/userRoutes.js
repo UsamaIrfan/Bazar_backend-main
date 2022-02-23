@@ -11,14 +11,20 @@ const {
   deleteUser,
   ForgetPasswordReq,
   forgetPasswordVerify,
-  resetPassword
+  resetPassword,
+  userVerify,
+  loginOTPVerify,
 } = require('../controller/userController');
 
 //register a user
 router.post('/register', registerUser);
 
+// verify user by OTP
+router.post('/register/verify/:otp', userVerify);
+
 //login a user
 router.post('/login', loginUser);
+router.post('/login/otp/:otp', loginOTPVerify);
 
 //register or login with google and fb
 router.post('/signup', signUpWithProvider);

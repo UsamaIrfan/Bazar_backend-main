@@ -22,7 +22,8 @@ const updatePurchase = asyncHandler(async (req, res, next) => {
         req.params.id,
         req.body,
         {
-            runValidators: true
+            runValidators: true,
+            new: true
         }
     )
     res.status(200).json({ purchase })

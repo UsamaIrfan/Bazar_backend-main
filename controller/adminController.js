@@ -3,9 +3,10 @@ const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const Admin = require('../models/Admin');
 const { signToken } = require('../config/auth');
+const asyncHandler = require('../middleware/async')
 dayjs.extend(utc);
 
-const loginAdmin = async (req, res) => {
+const loginAdmin = asyncHandler(async (req, res) => {
   const admin = await Admin.findOne({ email: req.body.email });
   if (admin && bcrypt.compareSync(req.body.password, admin.password)) {
     const token = signToken(admin);
@@ -22,7 +23,43 @@ const loginAdmin = async (req, res) => {
       message: 'Invalid Email or password!',
     });
   }
-};
+});
+
+
+const registerAdmin = asyncHandler(async (req, res, next) => {
+
+  const isValid = await RegisterUserValidation(req.body)
+  if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
+
+  const salt = bcrypt.genSaltSync(10);
+  const password = bcrypt.hashSync(req.body.password, salt);
+
+  const newUser = {
+    name: req.body.name,
+    email: req.body.email,
+    phone: req.body.phone,
+    nic: req.body.nic,
+    verified: false,
+    password,
+  }
+  const date = new Date();
+  date.setMinutes(date.getMinutes() + 10);
+
+  const user = await User.create({ ...newUser });
+  if (!user) return next(new ErrorResponse(401, `User not created!`));
+
+  const newOTP = {
+    user: user._id,
+    type: 'register',
+    expiration: date,
+  }
+
+  const otp = await OTP.create({ ...newOTP });
+  if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
+  // console.log(otp)
+  res.send({ message: 'User created successfully!' });
+
+});
 
 // const addStaff = async (req, res) => {
 //   try {
