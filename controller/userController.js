@@ -108,7 +108,6 @@ const loginUser = asyncHandler(async (req, res, next) => {
 
   res.send({ message: "verify your OTP!" });
 
-  next();
 });
 
 const loginOTPVerify = asyncHandler(async (req, res, next) => {
@@ -134,7 +133,7 @@ const loginOTPVerify = asyncHandler(async (req, res, next) => {
 })
 
 
-const changePassword = async (req, res, next) => {
+const changePassword = asyncHandler(async (req, res, next) => {
 
   const isValid = await ChangePasswordValidation(req.body)
   if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
@@ -142,14 +141,10 @@ const changePassword = async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
 
   if (!user) {
-    res.status(500).send({
-      message: 'Invalid email or current password!',
-    });
+    return next(new ErrorResponse(500, `Invalid email or current password!`))
   }
   else if (!user.password) {
-    res.status(200).send({
-      message: 'For change password,You need to sign in with email & password!',
-    });
+    return next(new ErrorResponse(500, `For change password,You need to sign in with email & password!`))
   }
   else if (user && bcrypt.compareSync(req.body.currentPassword, user.password)) {
     const salt = bcrypt.genSaltSync(10);
@@ -161,11 +156,9 @@ const changePassword = async (req, res, next) => {
     });
   }
   else {
-    res.status(401).send({
-      message: 'Invalid email or current password!',
-    });
+    return next(new ErrorResponse(401, `Invalid email or current password!`))
   }
-};
+});
 
 
 const ForgetPasswordReq = async (req, res) => {

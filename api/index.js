@@ -95,8 +95,7 @@ app.use('/api/orders/', isAuth, orderRoutes);
 
 
 app.use(NotFound);
-// app.use(ErrorHandler)
-ErrorHandler(app)
+app.use(ErrorHandler)
 
 
 const PORT = process.env.PORT || 5000;

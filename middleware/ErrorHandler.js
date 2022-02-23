@@ -46,13 +46,11 @@ const ErrorHandler = (err, req, res, next) => {
     }
 
 
-    res
-        .status(err.status || 500)
-        .json({
-            status: err.status || 500,
-            message: err.message || "Server Error",
-            errors: err.errors || []
-        })
+    res.status(err.status || 500).json({
+        status: err.status || 500,
+        message: err.message || "Server Error",
+        errors: err.errors || []
+    })
 
 }
 

@@ -10,7 +10,7 @@ const otpSchema = new mongoose.Schema(
         otp: {
             type: String,
             required: false,
-            default: otpGenerator.generate(5, { upperCase: false, specialChars: false, alphabets: false, digits: true }),
+            default: otpGenerator.generate(6, { upperCase: false, specialChars: false, alphabets: false, digits: true }),
         },
         verified: {
             type: Boolean,
