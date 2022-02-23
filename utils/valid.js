@@ -28,11 +28,22 @@ const ChangePasswordValidation = async (body) => {
 const RegisterUserValidation = async (body) => {
     const schema = Joi.object({
         email: Joi.string().email(),
-        phone: Joi.string().min(11).max(11).required(),
+        phone: Joi.string().min(11).max(12),
         password: Joi.string().min(6).max(54).required(),
-        nic: Joi.string().min(14).max(14).required(),
+        nic: Joi.string().min(13).max(13).required(),
         name: Joi.string().required(),
-        nnn: Joi.string().when('a', { is: 'avalue', then: Joi.string().required() }).concat(Joi.string().when('b', { is: 'bvalue', then: Joi.string().required() }))
+    })
+    try {
+        await schema.validateAsync(body);
+    } catch (error) {
+        return error;
+    }
+}
+
+const LoginUserValidation = async (body) => {
+    const schema = Joi.object({
+        user: Joi.string().required(),
+        password: Joi.string().required(),
     })
     try {
         await schema.validateAsync(body);
@@ -45,4 +56,5 @@ module.exports = {
     isValidateEmail,
     ChangePasswordValidation,
     RegisterUserValidation,
+    LoginUserValidation,
 };
