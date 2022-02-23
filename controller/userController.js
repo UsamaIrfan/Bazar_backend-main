@@ -5,7 +5,12 @@ const OTP = require('../models/Otp')
 const { signToken } = require('../config/auth');
 const { sendEmail } = require('../config/sendEmail')
 const ErrorResponse = require('../utils/ErrorResponse');
-const { isValidateEmail, ChangePasswordValidation, RegisterUserValidation } = require('../utils/valid');
+const {
+  isValidateEmail,
+  ChangePasswordValidation,
+  RegisterUserValidation,
+  LoginUserValidation,
+} = require('../utils/valid');
 const asyncHandler = require('../middleware/async');
 
 
@@ -78,18 +83,23 @@ const userVerify = asyncHandler(async (req, res, next) => {
 
 const loginUser = asyncHandler(async (req, res, next) => {
 
+  const isValid = await LoginUserValidation(req.body)
+  if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
+
   let user = {}
 
   if (isValidateEmail(req.body.user)) {
-    console.log('login with email')
+    // console.log('login with email')
     user = await User.findOne({ email: req.body.user });
     if (!user) return next(new ErrorResponse(404, `Invalid email or password!`));
   } else {
-    console.log('login with phone')
+    // console.log('login with phone')
     user = await User.findOne({ phone: req.body.user });
     if (!user) return next(new ErrorResponse(404, `Invalid phone or password!`));
   }
-  console.log(user);
+
+  if (!user.verified) return next(new ErrorResponse(404, `User not verified!`));
+  // console.log(user);
 
   const isCorrect = await user.matchPassword(req.body.password);
   if (!isCorrect) return next(new ErrorResponse(401, `Invalid credentials!`));
