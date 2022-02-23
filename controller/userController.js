@@ -46,7 +46,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
   const otp = await OTP.create({ ...newOTP });
   if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
   // console.log(otp)
-  res.send({ message: 'User created successfully!' });
+  res.send({ message: 'User created successfully!', otp });
 
 });
 
@@ -116,7 +116,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
   const otp = await OTP.create({ ...newOTP });
   if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
 
-  res.send({ message: "verify your OTP!" });
+  res.send({ message: "verify your OTP!", otp });
 
 });
 
