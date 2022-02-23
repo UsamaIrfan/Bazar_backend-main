@@ -9,12 +9,8 @@ const {
   updateStatus,
   deleteCategory,
 } = require('../controller/categoryController');
-
-//add a category
-router.post('/add', addCategory);
-
-//add all category
-router.post('/all', addAllCategory);
+const { isAdmin } = require('../config/auth');
+const { CATEGORY_ROLE } = require('../utils/roles');
 
 //get all category
 router.get('/', getAllCategory);
@@ -22,13 +18,19 @@ router.get('/', getAllCategory);
 //get a category
 router.get('/:id', getCategoryById);
 
+//add a category
+router.post('/add', isAdmin(CATEGORY_ROLE), addCategory);
+
+//add all category
+router.post('/all', isAdmin(CATEGORY_ROLE), addAllCategory);
+
 //update a category
-router.put('/:id', updateCategory);
+router.put('/:id', isAdmin(CATEGORY_ROLE), updateCategory);
 
 //show/hide a category
-router.put('/status/:id', updateStatus);
+router.put('/status/:id', isAdmin(CATEGORY_ROLE), updateStatus);
 
 //delete a category
-router.patch('/:id', deleteCategory);
+router.delete('/:id', isAdmin(CATEGORY_ROLE), deleteCategory);
 
 module.exports = router;

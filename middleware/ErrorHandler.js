@@ -1,7 +1,7 @@
 const HttpException = require("../utils/ErrorResponse")
 
 const ErrorHandler = (err, req, res, next) => {
-
+    // console.log(err)
     let errors = []
 
     // API Not Found

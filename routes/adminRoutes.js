@@ -2,18 +2,21 @@ const express = require('express');
 const router = express.Router();
 const {
   loginAdmin,
-  // addStaff,
   getAllStaff,
   getStaffById,
   updateStaff,
   deleteStaff,
+  registerAdmin,
+  changePassword,
 } = require('../controller/adminController');
 
 //login a admin
 router.post('/login', loginAdmin);
 
 //add a staff
-// router.post('/add', addStaff);
+router.post('/register', registerAdmin);
+
+router.put('/change-password', changePassword)
 
 //get all staff
 router.post('/', getAllStaff);

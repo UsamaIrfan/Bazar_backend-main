@@ -18,11 +18,9 @@ const cookieSession = require('cookie-session')
 require('../config/passport-setup')
 const passport = require('passport');
 const ErrorHandler = require('../middleware/ErrorHandler')
-const ErrorResponse = require('../utils/ErrorResponse')
 const NotFound = require('../routes/404')
 const helmet = require("helmet");
-// const session = require('express-session')
-// const { ensureGuest, ensureAuth } = require('../middleware/googleAuth')
+const { PURCHASE_ROLE, VENDOR_ROLE } = require("../utils/roles")
 
 connectDB();
 const app = express();
@@ -31,7 +29,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(helmet())
 
-
 app.use(cookieSession({
   name: 'bazar.session',
   keys: ['key1', 'key2'],
@@ -39,33 +36,11 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
 
-
-
 //root route
 app.get('/', (req, res) => res.send('App works properly!'));
 
-
 app.use(passport.initialize());
 app.use(passport.session());
-
-
-
-// app.get('/abc' , ensureGuest, (req, res) => { res.send('you are logged out') })
-// app.get('/failed' , (req, res) => { res.send('failed to login') })
-// app.get('/good',ensureAuth ,(req, res) => {res.send(`successfully login:${req.user.displayname}`)})
-// app.get('/google',passport.authenticate('google', { scope: ['profile' , 'email'] }));
-// app.get('/google/callback', 
-//   passport.authenticate('google', { failureRedirect: '/abc' }),
-//   (req, res)=> {
-//     // Successful authentication, redirect home.
-//     res.sendStatus(200);
-//     res.redirect('/good');
-//   });
-// app.get('/google/callback',
-//   passport.authenticate('google', { failureRedirect: '/abc', failureMessage: true }),
-//   function(req, res) {
-//     res.redirect('/good');
-//   });
 
 app.get('/logout', (req, res) => {
   req.session = null;
@@ -78,25 +53,17 @@ app.use('/api/products/', productRoutes);
 app.use('/api/category/', categoryRoutes);
 app.use('/api/coupon/', couponRoutes);
 app.use('/api/user/', userRoutes);
-app.use('/api/order/', isAuth, userOrderRoutes);
-app.use('/api/vendors/', isAdmin, vendorRoutes);
-app.use('/api/purchases/', isAdmin, purchaseRoutes);
 app.use('/api/shippings/', shippingRoutes);
+app.use('/api/order/', isAuth, userOrderRoutes);
+app.use('/api/vendors/', isAdmin(VENDOR_ROLE), vendorRoutes);
+app.use('/api/purchases/', isAdmin(PURCHASE_ROLE), purchaseRoutes);
 
 //if you not use admin dashboard then these two route will not needed.
 app.use('/api/admin/', adminRoutes);
 app.use('/api/orders/', isAuth, orderRoutes);
 
-// handle unhandled routes
-// app.all('*', (req, res, next) => {
-
-//   next(new ErrorResponse(`Can't find ${req.originalUrl} on this server!`, 404));
-//   })
-
-
 app.use(NotFound);
 app.use(ErrorHandler)
-
 
 const PORT = process.env.PORT || 5000;
 

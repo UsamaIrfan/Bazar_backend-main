@@ -1,12 +1,31 @@
 const mongoose = require("mongoose");
-const bcrypt = require('bcryptjs');
 
 const adminSchema = new mongoose.Schema(
   {
+    // main info
+    userName: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    phone: {
+      type: String,
+      required: false,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    roles: {
+      type: [String],
+      required: true,
+      enum: ["Admin", "Product", "Category", "Customer", "Order", "Coupon", "Vendor", "Purchase", "Shipping"],
+    },
     name: {
       type: String,
       required: true,
     },
+    // Basic Info
     image: {
       type: String,
       required: false,
@@ -23,28 +42,10 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    phone: {
-      type: String,
-      required: false,
-    },
-    password: {
-      type: String,
-      required: false,
-      // default: bcrypt.hashSync("12345678"),
-    },
-    role: {
-      type: String,
-      required: false,
-    },
     joiningData: {
       type: Date,
       required: false,
+      default: Date.now,
     },
   },
   {

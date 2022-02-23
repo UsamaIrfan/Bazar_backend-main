@@ -12,10 +12,6 @@ const otpSchema = new mongoose.Schema(
             required: false,
             default: otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false, digits: true }),
         },
-        verified: {
-            type: Boolean,
-            default: false,
-        },
         expiration: {
             type: Date,
             required: false,

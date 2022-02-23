@@ -52,9 +52,52 @@ const LoginUserValidation = async (body) => {
     }
 }
 
+// Admin
+const RegisterAdminValidation = async (body) => {
+    const schema = Joi.object({
+        phone: Joi.string().min(11).max(12),
+        userName: Joi.string().min(8).max(24).required(),
+        password: Joi.string().min(6).max(54).required(),
+        roles: Joi.array().items(Joi.string()).required(),
+        name: Joi.string().required(),
+    })
+    try {
+        await schema.validateAsync(body);
+    } catch (error) {
+        return error;
+    }
+}
+const LoginAdminValidation = async (body) => {
+    const schema = Joi.object({
+        userName: Joi.string().required(),
+        password: Joi.string().required(),
+    })
+    try {
+        await schema.validateAsync(body);
+    } catch (error) {
+        return error;
+    }
+}
+const ChangePasswordAdminValidation = async (body) => {
+    const schema = Joi.object({
+        userName: Joi.string().required(),
+        currentPassword: Joi.string().required(),
+        newPassword: Joi.string().min(8).max(54).required(),
+    })
+    try {
+        await schema.validateAsync(body);
+    } catch (error) {
+        return error;
+    }
+}
+
 module.exports = {
     isValidateEmail,
     ChangePasswordValidation,
     RegisterUserValidation,
     LoginUserValidation,
+    // Admin
+    RegisterAdminValidation,
+    LoginAdminValidation,
+    ChangePasswordAdminValidation,
 };
