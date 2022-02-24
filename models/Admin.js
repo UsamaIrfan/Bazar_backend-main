@@ -6,14 +6,19 @@ const adminSchema = new mongoose.Schema(
     userName: {
       type: String,
       required: true,
+      minlength: [7, "Username must be at least 7 characters long"],
+      maxlength: 10,
       unique: true,
     },
     phone: {
       type: String,
+      minLength: 11,
+      maxLength: 12,
       required: false,
     },
     password: {
       type: String,
+      minlength: [7, "Password must be at least 7 characters long"],
       required: true,
     },
     roles: {
