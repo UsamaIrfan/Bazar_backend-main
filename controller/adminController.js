@@ -80,7 +80,6 @@ const updateStaff = asyncHandler(async (req, res, next) => {
   if (admin) {
 
     admin.name = req.body.data.name;
-    admin.email = req.body.data.email;
     admin.phone = req.body.data.phone;
     admin.role = req.body.data.role;
     admin.joiningData = dayjs().utc().format(req.body.data.joiningDate);
