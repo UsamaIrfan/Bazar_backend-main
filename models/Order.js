@@ -59,6 +59,10 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    shippingDuration: {
+      type: String,
+      required: true,
+    },
     paymentMethod: {
       type: String,
       required: true,
