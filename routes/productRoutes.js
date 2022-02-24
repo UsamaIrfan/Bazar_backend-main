@@ -20,7 +20,7 @@ router.get('/:id', getProductById);
 router.get('/', getAllProducts);
 
 //get a product by slug
-router.get('/:slug', getProductBySlug);
+router.get('/slug/:slug', getProductBySlug);
 
 //add a product
 router.post('/add', isAdmin(PRODUCT_ROLE), addProduct);
