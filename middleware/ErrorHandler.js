@@ -41,6 +41,9 @@ const ErrorHandler = (err, req, res, next) => {
             if (obj.kind === 'enum') {
                 errors.push(`${obj.value} is not a valid value for ${obj.path}`)
             }
+            if (obj.kind === 'minlength' || obj.kind === 'maxlength') {
+                errors.push(obj.message)
+            }
         });
         err = new HttpException(403, "Invalid body!", errors);
     }

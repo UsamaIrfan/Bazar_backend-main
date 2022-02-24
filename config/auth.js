@@ -1,6 +1,7 @@
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
+const User = require('../models/User');
 const ErrorResponse = require('../utils/ErrorResponse');
 
 const signToken = (user) => {
@@ -29,7 +30,13 @@ const isAuth = async (req, res, next) => {
   try {
     const token = authorization.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // console.log(decoded)
     req.user = decoded;
+
+    const user = await User.findById(decoded._id);
+    if (!user) {
+      return next(new ErrorResponse(401, 'You are not authorized to perform this action'))
+    }
 
     next();
   } catch (err) {

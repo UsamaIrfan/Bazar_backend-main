@@ -38,8 +38,8 @@ const loginAdmin = asyncHandler(async (req, res, next) => {
 
 const registerAdmin = asyncHandler(async (req, res, next) => {
 
-  const isValid = await RegisterAdminValidation(req.body)
-  if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
+  // const isValid = await RegisterAdminValidation(req.body)
+  // if (isValid) return next(new ErrorResponse(400, `${isValid.details[0].message}`))
 
   const admin = await Admin.findOne({ userName: req.body.userName });
   if (admin) return next(new ErrorResponse(400, 'Admin username already exists!'));
