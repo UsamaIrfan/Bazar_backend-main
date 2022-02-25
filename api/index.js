@@ -20,7 +20,7 @@ const passport = require('passport');
 const ErrorHandler = require('../middleware/ErrorHandler')
 const NotFound = require('../routes/404')
 const helmet = require("helmet");
-const { PURCHASE_ROLE, VENDOR_ROLE } = require("../utils/roles")
+const { PURCHASE_ROLE, VENDOR_ROLE, ORDER_ROLE } = require("../utils/roles")
 
 connectDB();
 const app = express();
@@ -60,7 +60,7 @@ app.use('/api/purchases/', isAdmin(PURCHASE_ROLE), purchaseRoutes);
 
 //if you not use admin dashboard then these two route will not needed.
 app.use('/api/admin/', adminRoutes);
-app.use('/api/orders/', isAuth, orderRoutes);
+app.use('/api/orders/', isAdmin(ORDER_ROLE), orderRoutes);
 
 app.use(NotFound);
 app.use(ErrorHandler)

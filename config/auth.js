@@ -57,7 +57,10 @@ const isAdmin = (role) => {
 
       const admin = await Admin.findById(decoded._id);
 
-      if (!admin || (!admin.roles.includes('Admin') && !admin.roles.includes(role))) {
+      // if (!admin || (!admin.roles.includes('Admin') && !admin.roles.includes(role))) {
+      //   return next(new ErrorResponse(401, 'You are not authorized to perform this action'))
+      // }
+      if (!admin) {
         return next(new ErrorResponse(401, 'You are not authorized to perform this action'))
       }
 
