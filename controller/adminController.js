@@ -26,7 +26,7 @@ const loginAdmin = asyncHandler(async (req, res, next) => {
       name: admin.name,
       roles: admin.roles,
       phone: '0000000000',
-      image: 'https://res.cloudinary.com/dzqbzqgqw/image/upload/v1599098981/avatar_default_qxqzqe.png',
+      image: admin.image || 'https://res.cloudinary.com/dzqbzqgqw/image/upload/v1599098981/avatar_default_qxqzqe.png',
     });
   } else {
     res.status(401).send({
