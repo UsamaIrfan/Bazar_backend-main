@@ -3,11 +3,9 @@ const { handleProductQuantity } = require('../config/others');
 const asyncHandler = require('../middleware/async')
 
 const addOrder = asyncHandler(async (req, res, next) => {
-  const newOrder = new Order({
-    ...req.body,
-    user: req.user._id,
-  });
-  const order = await newOrder.save();
+
+  const order = await Order.create({ ...req.body, user: req.user._id, })
+
   handleProductQuantity(order.cart);
   res.status(201).send(order);
 });

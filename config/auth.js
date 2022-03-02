@@ -30,7 +30,6 @@ const isAuth = async (req, res, next) => {
   try {
     const token = authorization.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // console.log(decoded)
     req.user = decoded;
 
     const user = await User.findById(decoded._id);
@@ -40,7 +39,7 @@ const isAuth = async (req, res, next) => {
 
     next();
   } catch (err) {
-    return next(error)
+    return next(new ErrorResponse(401, 'Invalid token'))
   }
 };
 
