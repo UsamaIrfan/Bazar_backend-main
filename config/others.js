@@ -11,7 +11,7 @@ const handleProductQuantity = (cart) => {
       },
       (err) => {
         if (err) {
-          console.log(err.message);
+          console.log("handleProductQuantity", err.message);
         } else {
           console.log('success');
         }
