@@ -10,29 +10,31 @@ const {
   updateStatus,
   deleteProduct,
 } = require('../controller/productController');
-
-//add a product
-router.post('/add', addProduct);
-
-//add multiple products
-router.post('/all', addAllProducts);
+const { isAdmin } = require('../config/auth')
+const { PRODUCT_ROLE } = require('../utils/roles')
 
 //get a product
-router.post('/:id', getProductById);
+router.get('/:id', getProductById);
 
 //get all products
 router.get('/', getAllProducts);
 
 //get a product by slug
-router.get('/:slug', getProductBySlug);
+router.get('/slug/:slug', getProductBySlug);
+
+//add a product
+router.post('/add', isAdmin(PRODUCT_ROLE), addProduct);
+
+//add multiple products
+router.post('/all', isAdmin(PRODUCT_ROLE), addAllProducts);
 
 //update a product
-router.put('/:id', updateProduct);
+router.put('/:id', isAdmin(PRODUCT_ROLE), updateProduct);
 
 //update a product status
-router.put('/status/:id', updateStatus);
+router.put('/status/:id', isAdmin(PRODUCT_ROLE), updateStatus);
 
 //delete a product
-router.delete('/:id', deleteProduct);
+router.delete('/:id', isAdmin(PRODUCT_ROLE), deleteProduct);
 
 module.exports = router;

@@ -1,53 +1,31 @@
 const Category = require('../models/Category');
+const asyncHandler = require('../middleware/async');
 
-const addCategory = async (req, res) => {
-  try {
-    const newCategory = new Category(req.body);
-    await newCategory.save();
-    res.status(200).send({
-      message: 'Category Added Successfully!',
-    });
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
+const addCategory = asyncHandler(async (req, res, next) => {
+  const category = await Category.create(req.body)
+  res.status(200).json({ category })
+});
 
-const addAllCategory = async (req, res) => {
-  try {
-    await Category.insertMany(req.body);
-    res.status(200).send({
-      message: 'Category Added successfully!',
-    });
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
+const addAllCategory = asyncHandler(async (req, res) => {
+  const categories = await Category.insertMany(req.body);
+  res.status(200).send({
+    message: 'Category Added successfully!',
+    categories,
+  });
 
-const getAllCategory = async (req, res) => {
-  try {
-    const categories = await Category.find({}).sort({ _id: -1 });
-    res.send(categories);
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
+});
 
-const getCategoryById = async (req, res) => {
-  try {
-    const category = await Category.findById(req.params.id);
-    res.send(category);
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
+const getAllCategory = asyncHandler(async (req, res) => {
+  const query = req.query;
+  const categories = await Category.find({ ...query }).sort({ _id: -1 });
+  res.send(categories);
+});
+
+const getCategoryById = asyncHandler(async (req, res, next) => {
+  const category = await Category.findById(req.params.id);
+  res.send(category);
+});
+
 
 const updateCategory = async (req, res) => {
   try {

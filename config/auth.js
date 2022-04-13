@@ -1,8 +1,11 @@
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
+const User = require('../models/User');
+const ErrorResponse = require('../utils/ErrorResponse');
 
 const signToken = (user) => {
+  // console.log("user", user);
   return jwt.sign(
     {
       _id: user._id,
@@ -11,40 +14,62 @@ const signToken = (user) => {
       address: user.address,
       phone: user.phone,
       image: user.image,
+      roles: user.roles || "User",
     },
     process.env.JWT_SECRET,
     {
-      expiresIn: '2d',
+      expiresIn: '1d',
     }
   );
 };
 
 const isAuth = async (req, res, next) => {
   const { authorization } = req.headers;
+  if (!authorization) return next(new ErrorResponse(401, 'You are not logged in'));
+
   try {
     const token = authorization.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
+
+    const user = await User.findById(decoded._id);
+    if (!user) {
+      return next(new ErrorResponse(401, 'You are not authorized to perform this action'))
+    }
+
     next();
   } catch (err) {
-    res.status(401).send({
-      message: err.message,
-    });
+    return next(new ErrorResponse(401, 'Invalid token'))
   }
 };
 
-const isAdmin = async (req, res, next) => {
-  console.log(req.body);
-  const admin = await Admin.findOne({ email: req.body.email });
-  console.log(admin);
-  if (admin.role === 'Admin') {
-    next();
-  } else {
-    res.status(401).send({
-      message: 'User is not Admin',
-    });
-  }
-};
+const isAdmin = (role) => {
+  return async (req, res, next) => {
+    const { authorization } = req.headers;
+    if (!authorization) return next(new ErrorResponse(401, 'You are not logged in'));
+
+    try {
+      const token = authorization.split(' ')[1];
+      const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+
+      req.user = decoded;
+
+      const admin = await Admin.findById(decoded._id);
+
+      // if (!admin || (!admin.roles.includes('Admin') && !admin.roles.includes(role))) {
+      //   return next(new ErrorResponse(401, 'You are not authorized to perform this action'))
+      // }
+      if (!admin) {
+        return next(new ErrorResponse(401, 'You are not authorized to perform this action'))
+      }
+
+      next()
+    } catch (error) {
+      return next(error)
+    }
+  };
+}
+
 module.exports = {
   signToken,
   isAuth,

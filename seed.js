@@ -18,11 +18,11 @@ const importData = async () => {
     // await User.deleteMany();
     // await User.insertMany(userData);
 
-    // await Admin.deleteMany();
-    // await Admin.insertMany(adminData);
+    await Admin.deleteMany();
+    await Admin.insertMany(adminData);
 
-    await Product.deleteMany();
-    await Product.insertMany(productData);
+    // await Product.deleteMany();
+    // await Product.insertMany(productData);
 
     // await Category.deleteMany();
     // await Category.insertMany(categoryData);

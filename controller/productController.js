@@ -1,128 +1,87 @@
 const Product = require('../models/Product');
+const asyncHandler = require('../middleware/async')
+const ErrorResponse = require('../utils/ErrorResponse')
 
-const addProduct = async (req, res) => {
-  try {
-    const newProduct = new Product(req.body);
-    await newProduct.save();
-    res.status(200).send({
-      message: 'Product Added Successfully!',
-    });
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
+const addProduct = asyncHandler(async (req, res, next) => {
+  const product = new Product(req.body);
+  await product.save();
+  res.status(200).send({
+    message: 'Product Added Successfully!',
+    product
+  });
+});
+
+const addAllProducts = asyncHandler(async (req, res, next) => {
+  // await Product.deleteMany();
+  await Product.insertMany(req.body);
+  res.status(200).send({
+    message: 'Product Added successfully!',
+  });
+});
+
+const getAllProducts = asyncHandler(async (req, res, next) => {
+  const query = req.query;
+  const products = await Product.find({ ...query }).sort({ _id: -1 });
+  res.send(products);
+});
+
+const getProductBySlug = asyncHandler(async (req, res, next) => {
+  const product = await Product.findOne({ slug: req.params.slug });
+  if (!product) return next(new ErrorResponse(404, `Product ${req.params.slug} not found`));
+  res.send(product);
+});
+
+const getProductById = asyncHandler(async (req, res, next) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) return next(new ErrorResponse(404, `Product ${req.params.id} not found`));
+  res.send(product);
+});
+
+const updateProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  if (product) {
+    product.title = req.body.title;
+    product.slug = req.body.slug;
+    product.description = req.body.description;
+    product.parent = req.body.parent;
+    product.children = req.body.children;
+    product.type = req.body.type;
+    product.unit = req.body.unit;
+    product.quantity = req.body.quantity;
+    product.originalPrice = req.body.originalPrice;
+    product.price = req.body.price;
+    product.discount = req.body.discount;
+    product.image = req.body.image;
+    product.tag = req.body.tag;
+    await product.save();
+    res.send({ data: product, message: 'Product updated successfully!' });
   }
-};
+  // handleProductStock(product);
+});
 
-const addAllProducts = async (req, res) => {
-  try {
-    await Product.deleteMany();
-    await Product.insertMany(req.body);
-    res.status(200).send({
-      message: 'Product Added successfully!',
-    });
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
-
-const getAllProducts = async (req, res) => {
-  try {
-    const products = await Product.find({}).sort({ _id: -1 });
-    res.send(products);
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
-
-const getProductBySlug = async (req, res) => {
-  try {
-    const product = await Product.findOne({ slug: req.params.slug });
-    res.send(product);
-  } catch (err) {
-    res.status(500).send({
-      message: `Slug problem, ${err.message}`,
-    });
-  }
-};
-
-const getProductById = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    res.send(product);
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
-
-const updateProduct = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (product) {
-      product.title = req.body.title;
-      product.slug = req.body.slug;
-      product.description = req.body.description;
-      product.parent = req.body.parent;
-      product.children = req.body.children;
-      product.type = req.body.type;
-      product.unit = req.body.unit;
-      product.quantity = req.body.quantity;
-      product.originalPrice = req.body.originalPrice;
-      product.price = req.body.price;
-      product.discount = req.body.discount;
-      product.image = req.body.image;
-      product.tag = req.body.tag;
-      await product.save();
-      res.send({ data: product, message: 'Product updated successfully!' });
-    }
-    // handleProductStock(product);
-  } catch (err) {
-    res.status(404).send(err.message);
-  }
-};
-
-const updateStatus = (req, res) => {
+const updateStatus = asyncHandler(async (req, res) => {
   const newStatus = req.body.status;
-  Product.updateOne(
+  const product = await Product.updateOne(
     { _id: req.params.id },
     {
       $set: {
         status: newStatus,
       },
     },
-    (err) => {
-      if (err) {
-        res.status(500).send({
-          message: err.message,
-        });
-      } else {
-        res.status(200).send({
-          message: `Product ${newStatus} Successfully!`,
-        });
-      }
-    }
+    { new: true, runValidators: true },
   );
-};
-
-const deleteProduct = (req, res) => {
-  Product.deleteOne({ _id: req.params.id }, (err) => {
-    if (err) {
-      res.status(500).send({
-        message: err.message,
-      });
-    } else {
-      res.status(200).send({
-        message: 'Product Deleted Successfully!',
-      });
-    }
+  res.status(200).send({
+    message: `Product ${newStatus} Successfully!`,
+    product,
   });
-};
+});
+
+const deleteProduct = asyncHandler(async (req, res) => {
+  await Product.deleteOne({ _id: req.params.id })
+  res.status(200).send({
+    message: 'Product Deleted Successfully!',
+  });
+});
 
 module.exports = {
   addProduct,

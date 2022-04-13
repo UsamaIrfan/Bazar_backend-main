@@ -35,7 +35,7 @@ const orderSchema = new mongoose.Schema(
     },
     zipCode: {
       type: String,
-      required: true,
+      // required: true,
     },
     subTotal: {
       type: Number,
@@ -59,6 +59,10 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    shippingDuration: {
+      type: String,
+      required: true,
+    },
     paymentMethod: {
       type: String,
       required: true,
@@ -70,6 +74,7 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['Pending', 'Processing', 'Delivered'],
+      default: 'Pending',
     },
   },
   {
