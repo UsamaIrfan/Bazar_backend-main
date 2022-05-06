@@ -38,4 +38,4 @@ const importData = async () => {
   }
 };
 
-importData();
+// importData();

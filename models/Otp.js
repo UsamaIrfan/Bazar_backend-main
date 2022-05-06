@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const otpGenerator = require('otp-generator')
 
 const otpSchema = new mongoose.Schema(
     {
@@ -9,8 +8,7 @@ const otpSchema = new mongoose.Schema(
         },
         otp: {
             type: String,
-            required: false,
-            default: otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false, digits: true }),
+            required: true,
         },
         expiration: {
             type: Date,

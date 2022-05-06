@@ -9,7 +9,6 @@ const vendorSchema = new mongoose.Schema(
     },
     nic: {
       type: String,
-      required: true,
       unique: true,
     },
     name: {

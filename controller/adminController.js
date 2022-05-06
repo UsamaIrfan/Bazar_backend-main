@@ -81,6 +81,7 @@ const updateStaff = asyncHandler(async (req, res, next) => {
 
     admin.name = req.body.data.name;
     admin.phone = req.body.data.phone;
+    admin.email = req.body.data.email;
     admin.role = req.body.data.role;
     admin.joiningData = dayjs().utc().format(req.body.data.joiningDate);
     admin.image = req.body.data.image;

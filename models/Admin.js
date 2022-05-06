@@ -10,6 +10,10 @@ const adminSchema = new mongoose.Schema(
       maxlength: [25, "Username must be at most 25 characters long"],
       unique: true,
     },
+    email: {
+      type: String,
+      required: true,
+    },
     phone: {
       type: String,
       minLength: 11,
@@ -24,7 +28,17 @@ const adminSchema = new mongoose.Schema(
     roles: {
       type: [String],
       required: true,
-      enum: ["Admin", "Product", "Category", "Customer", "Order", "Coupon", "Vendor", "Purchase", "Shipping"],
+      enum: [
+        "Admin",
+        "Product",
+        "Category",
+        "Customer",
+        "Order",
+        "Coupon",
+        "Vendor",
+        "Purchase",
+        "Shipping",
+      ],
     },
     name: {
       type: String,

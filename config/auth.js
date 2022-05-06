@@ -1,8 +1,8 @@
-require('dotenv').config();
-const jwt = require('jsonwebtoken');
-const Admin = require('../models/Admin');
-const User = require('../models/User');
-const ErrorResponse = require('../utils/ErrorResponse');
+require("dotenv").config();
+const jwt = require("jsonwebtoken");
+const Admin = require("../models/Admin");
+const User = require("../models/User");
+const ErrorResponse = require("../utils/ErrorResponse");
 
 const signToken = (user) => {
   // console.log("user", user);
@@ -18,38 +18,45 @@ const signToken = (user) => {
     },
     process.env.JWT_SECRET,
     {
-      expiresIn: '1d',
+      expiresIn: "1d",
     }
   );
 };
 
 const isAuth = async (req, res, next) => {
   const { authorization } = req.headers;
-  if (!authorization) return next(new ErrorResponse(401, 'You are not logged in'));
+  if (!authorization)
+    return next(new ErrorResponse(401, "You are not logged in"));
 
   try {
-    const token = authorization.split(' ')[1];
+    const token = authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
 
+    console.log("DEC", decoded)
+
     const user = await User.findById(decoded._id);
+    console.log("USER", user);
     if (!user) {
-      return next(new ErrorResponse(401, 'You are not authorized to perform this action'))
+      return next(
+        new ErrorResponse(401, "You are not authorized to perform this action")
+      );
     }
 
     next();
   } catch (err) {
-    return next(new ErrorResponse(401, 'Invalid token'))
+    return next(new ErrorResponse(401, "Invalid token"));
   }
 };
 
 const isAdmin = (role) => {
   return async (req, res, next) => {
     const { authorization } = req.headers;
-    if (!authorization) return next(new ErrorResponse(401, 'You are not logged in'));
+    if (!authorization)
+      return next(new ErrorResponse(401, "You are not logged in"));
 
     try {
-      const token = authorization.split(' ')[1];
+      const token = authorization.split(" ")[1];
       const decoded = await jwt.verify(token, process.env.JWT_SECRET);
 
       req.user = decoded;
@@ -60,15 +67,20 @@ const isAdmin = (role) => {
       //   return next(new ErrorResponse(401, 'You are not authorized to perform this action'))
       // }
       if (!admin) {
-        return next(new ErrorResponse(401, 'You are not authorized to perform this action'))
+        return next(
+          new ErrorResponse(
+            401,
+            "You are not authorized to perform this action"
+          )
+        );
       }
 
-      next()
+      next();
     } catch (error) {
-      return next(error)
+      return next(error);
     }
   };
-}
+};
 
 module.exports = {
   signToken,
