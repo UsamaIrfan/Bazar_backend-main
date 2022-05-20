@@ -51,6 +51,8 @@ const UpdateUserValidation = async (body) => {
     password: Joi.string().min(6).max(54),
     name: Joi.string(),
     address: Joi.string(),
+    designation: Joi.string(),
+    hasClinic: Joi.boolean(),
     country: Joi.string(),
     city: Joi.string(),
     image: Joi.string(),
@@ -113,10 +115,42 @@ const ChangePasswordAdminValidation = async (body) => {
   }
 };
 
+const RegisterDoctorValidation = async (body) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    phone: Joi.string().length(11),
+    password: Joi.string().min(6).max(54).required(),
+    designation: Joi.string().required(),
+    name: Joi.string().required(),
+    address: Joi.string(),
+    country: Joi.string(),
+    city: Joi.string(),
+  });
+  try {
+    await schema.validateAsync(body);
+  } catch (error) {
+    return error;
+  }
+};
+
+const LoginDoctorValidation = async (body) => {
+  const schema = Joi.object({
+    user: Joi.string().required(),
+    password: Joi.string().required(),
+  });
+  try {
+    await schema.validateAsync(body);
+  } catch (error) {
+    return error;
+  }
+};
+
 module.exports = {
   isValidateEmail,
   ChangePasswordValidation,
   RegisterUserValidation,
+  RegisterDoctorValidation,
+  LoginDoctorValidation,
   LoginUserValidation,
   UpdateUserValidation,
   // Admin

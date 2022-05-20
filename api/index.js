@@ -13,7 +13,8 @@ const couponRoutes = require("../routes/couponRoutes");
 const vendorRoutes = require("../routes/vendorRoutes");
 const purchaseRoutes = require("../routes/purchaseRoutes");
 const shippingRoutes = require("../routes/shippingRoutes");
-const currencyRoutes = require("../routes/currencyRoutes");
+// const currencyRoutes = require("../routes/currencyRoutes");
+const doctorRoutes = require("../routes/doctorRoutes");
 const { isAuth, isAdmin } = require("../config/auth");
 const cookieSession = require("cookie-session");
 require("../config/passport-setup");
@@ -60,7 +61,8 @@ app.use("/api/shippings/", shippingRoutes);
 app.use("/api/order/", isAuth, userOrderRoutes);
 app.use("/api/vendors/", isAdmin(VENDOR_ROLE), vendorRoutes);
 app.use("/api/purchases/", isAdmin(PURCHASE_ROLE), purchaseRoutes);
-app.use("/api/currency/", currencyRoutes);
+app.use("/api/doctor/", doctorRoutes);
+// app.use("/api/currency/", currencyRoutes);
 
 //if you not use admin dashboard then these two route will not needed.
 app.use("/api/admin/", adminRoutes);
