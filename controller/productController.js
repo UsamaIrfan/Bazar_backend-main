@@ -67,6 +67,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.discount = req.body.discount;
     product.image = req.body.image;
     product.images = req.body.images;
+    product.notes = req.body.notes;
+    product.mainAccords = req.body.mainAccords;
     product.tag = req.body.tag;
     await product.save();
     res.send({ data: product, message: "Product updated successfully!" });

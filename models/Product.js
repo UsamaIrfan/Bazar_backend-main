@@ -19,10 +19,12 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    children: {
-      type: String,
-      required: true,
-    },
+    children: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     image: {
       type: String,
       required: true,
@@ -31,6 +33,28 @@ const productSchema = new mongoose.Schema(
       type: [String],
       required: true,
     },
+    notes: {
+      top: [
+        {
+          type: String,
+        },
+      ],
+      middle: [
+        {
+          type: String,
+        },
+      ],
+      end: [
+        {
+          type: String,
+        },
+      ],
+    },
+    mainAccords: [
+      {
+        type: String,
+      },
+    ],
     originalPrice: {
       type: Number,
       required: true,
