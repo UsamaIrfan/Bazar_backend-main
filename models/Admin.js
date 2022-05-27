@@ -28,23 +28,12 @@ const adminSchema = new mongoose.Schema(
     roles: {
       type: [String],
       required: true,
-      enum: [
-        "Admin",
-        "Product",
-        "Category",
-        "Customer",
-        "Order",
-        "Coupon",
-        "Vendor",
-        "Purchase",
-        "Shipping",
-      ],
+      enum: ["Admin", "Secretary", "Doctor"],
     },
     name: {
       type: String,
       required: true,
     },
-    // Basic Info
     image: {
       type: String,
       required: false,

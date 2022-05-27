@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require("otp-generator");
-const { sendOtpMail } = require("../config/email");
+const { sendOtpMail, sendDoctorVerifyEmail } = require("../config/email");
 
 // Local Imports
 const Doctor = require("../models/Doctor");
@@ -49,54 +49,40 @@ const registerDoctor = asyncHandler(async (req, res, next) => {
   const doctor = new Doctor({ ...newDoctor });
   if (!doctor) return next(new ErrorResponse(401, `User not created!`));
 
-  // const otpCode = otpGenerator.generate(6, {
-  //   upperCaseAlphabets: false,
-  //   specialChars: false,
-  //   lowerCaseAlphabets: false,
-  //   digits: true,
-  // });
+  const admins = await Admin.find({});
 
-  // const { success, error } = await sendOtpMail(doctor.email, doctor.name, otpCode);
-
+  const promises = admins.map((admin) => {
+    new Promise(async (resolve, reject) => {
+      const sent = await sendDoctorVerifyEmail(admin, doctor);
+      if (sent) {
+        return resolve();
+      }
+      reject({ message: `Unable to send email to ${admin.email}` });
+    });
+  });
   const token = signToken(doctor);
-
   await doctor.save();
 
-  res.send({
-    token,
-    _id: doctor._id,
-    name: doctor.name,
-    email: doctor.email,
-    phone: doctor.phone,
-    image: doctor.image,
-    hasClinic: req.body.hasClinic,
-    clinicAddress: doctor.clinicAddress,
-    designation: doctor.designation,
-    address: doctor.address,
-    country: doctor.country,
-    city: doctor.city,
-    // emailSent: success,
-    // emailError: error,
-    // message: success
-    //   ? "We have sent you a verification code to your provided email address. Please verify your email."
-    //   : undefined,
-  });
-
-  // const otp = await OTP.create({ ...newOTP });
-  // if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
-  // const { success, error } = sendTwilioOtpSMS(user.phone, {
-  //   body: "Your OTP code is " + otpCode,
-  // });
-  // if (success) {
-  //   res.send({ message: "User created successfully!", otp });
-  // } else {
-  //   res.status(500).send({
-  //     message: "Unable to send OTP!",
-  //     error: {
-  //       error,
-  //     },
-  //   });
-  // }
+  await Promise.all(promises)
+    .then(async () => {
+      res.send({
+        token,
+        _id: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        phone: doctor.phone,
+        image: doctor.image,
+        hasClinic: req.body.hasClinic,
+        clinicAddress: doctor.clinicAddress,
+        designation: doctor.designation,
+        address: doctor.address,
+        country: doctor.country,
+        city: doctor.city,
+      });
+    })
+    .catch((error) => {
+      return next(new ErrorResponse(400, error.message));
+    });
 });
 
 const doctorVerify = asyncHandler(async (req, res, next) => {
@@ -116,7 +102,6 @@ const doctorVerify = asyncHandler(async (req, res, next) => {
   ).populate("user");
 
   await OTP.deleteOne({ otp: req.params.otp, type: "register" });
-  // console.log(user)
   const token = signToken(user);
 
   res.send({
@@ -148,9 +133,6 @@ const loginDoctor = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse(404, `Invalid phone or password!`));
   }
 
-  // if (!user.verified) return next(new ErrorResponse(404, `User not verified!`));
-  // // console.log(user);
-
   const isCorrect = await doctor.matchPassword(req.body.password);
   if (!isCorrect) return next(new ErrorResponse(401, `Invalid credentials!`));
 
@@ -169,27 +151,6 @@ const loginDoctor = asyncHandler(async (req, res, next) => {
     phone: doctor.phone,
     image: doctor.image,
   });
-
-  // const date = new Date();
-  // date.setMinutes(date.getMinutes() + 10);
-  // const newOTP = {
-  //   user: user._id,
-  //   type: "login",
-  //   expiration: date,
-  //   otp: otpGenerator.generate(6, {
-  //     upperCaseAlphabets: false,
-  //     specialChars: false,
-  //     lowerCaseAlphabets: false,
-  //     digits: true,
-  //   }),
-  // };
-
-  // await OTP.findOneAndDelete({ user: user._id, type: "login" });
-
-  // const otp = await OTP.create(newOTP);
-  // if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
-
-  // res.send({ message: "verify your OTP!", otp, user: user._id });
 });
 
 const loginOTPVerify = asyncHandler(async (req, res, next) => {
@@ -381,36 +342,6 @@ const getDoctorById = async (req, res) => {
     });
   }
 };
-
-// const updateUser = async (req, res) => {
-//   try {
-//     const isValid = await RegisterUserValidation(req.body);
-//     const user = await User.findById(req.params.id);
-//     if (user) {
-//       user.name = req.body.name;
-//       user.address = req.body.address;
-//       user.phone = req.body.phone;
-//       user.image = req.body.image;
-//       user.nic = req.body.nic;
-//       const updatedUser = await user.save();
-//       const token = signToken(updatedUser);
-//       res.send({
-//         token,
-//         _id: updatedUser._id,
-//         name: updatedUser.name,
-//         email: updatedUser.email,
-//         address: updatedUser.address,
-//         phone: updatedUser.phone,
-//         image: updatedUser.image,
-//         nic: updatedUser.nic,
-//       });
-//     }
-//   } catch (err) {
-//     res.status(404).send({
-//       message: "Your email is not valid!",
-//     });
-//   }
-// };
 
 const updateDoctor = asyncHandler(async (req, res, next) => {
   const isValid = await UpdateUserValidation(req.body);

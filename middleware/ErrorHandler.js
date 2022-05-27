@@ -48,7 +48,7 @@ const ErrorHandler = (err, req, res, next) => {
         err = new HttpException(403, "Invalid body!", errors);
     }
 
-
+    console.log(err)    
     res.status(err.status || 500).json({
         status: err.status || 500,
         message: err.message || "Server Error",

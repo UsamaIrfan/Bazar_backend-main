@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
+const mongoosePaginate = require("mongoose-paginate");
 
 const doctorSchema = new mongoose.Schema(
   {
@@ -59,6 +60,8 @@ const doctorSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+doctorSchema.plugin(mongoosePaginate);
 
 doctorSchema.methods.matchPassword = async function (password) {
   return await bcrypt.compare(password, this.password);

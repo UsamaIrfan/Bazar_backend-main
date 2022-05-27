@@ -79,9 +79,10 @@ const LoginUserValidation = async (body) => {
 // Admin
 const RegisterAdminValidation = async (body) => {
   const schema = Joi.object({
-    phone: Joi.string().min(11).max(12),
+    phone: Joi.string().min(11).max(12).required(),
     userName: Joi.string().min(8).max(24).required(),
     password: Joi.string().min(6).max(54).required(),
+    email: Joi.string().min(6).max(100).required(),
     roles: Joi.array().items(Joi.string()).required(),
     name: Joi.string().required(),
   });
@@ -105,7 +106,7 @@ const LoginAdminValidation = async (body) => {
 const ChangePasswordAdminValidation = async (body) => {
   const schema = Joi.object({
     userName: Joi.string().required(),
-    currentPassword: Joi.string().required(),
+    currentPassword: Joi.string().min(8).max(100).required(),
     newPassword: Joi.string().min(8).max(54).required(),
   });
   try {
