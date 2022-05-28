@@ -13,7 +13,6 @@ const {
 const Doctor = require("../models/Doctor");
 const Patient = require("../models/Patient");
 const Admin = require("../models/Admin");
-const OTP = require("../models/Otp");
 const { signToken, signEmailToken } = require("../config/auth");
 const { sendEmail } = require("../config/sendEmail");
 const ErrorResponse = require("../utils/ErrorResponse");

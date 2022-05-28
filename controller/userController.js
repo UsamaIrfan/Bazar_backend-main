@@ -9,7 +9,6 @@ const {
 
 // Local Imports
 const User = require("../models/User");
-const OTP = require("../models/Otp");
 const { signToken, signEmailToken } = require("../config/auth");
 const { sendEmail } = require("../config/sendEmail");
 const ErrorResponse = require("../utils/ErrorResponse");
