@@ -1,14 +1,20 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require("otp-generator");
-const { sendOtpMail, sendDoctorVerifyEmail } = require("../config/email");
+const {
+  sendOtpMail,
+  sendDoctorVerifyEmail,
+  sendEmailVerification,
+  sendForgetPasswordEmail,
+  sendDoctorEmail,
+} = require("../config/email");
 
 // Local Imports
 const Doctor = require("../models/Doctor");
 const Patient = require("../models/Patient");
 const Admin = require("../models/Admin");
 const OTP = require("../models/Otp");
-const { signToken } = require("../config/auth");
+const { signToken, signEmailToken } = require("../config/auth");
 const { sendEmail } = require("../config/sendEmail");
 const ErrorResponse = require("../utils/ErrorResponse");
 const {
@@ -21,6 +27,7 @@ const {
   LoginDoctorValidation,
 } = require("../utils/valid");
 const asyncHandler = require("../middleware/async");
+const { SuccessResponse } = require("../utils/response");
 
 const registerDoctor = asyncHandler(async (req, res, next) => {
   const isValid = await RegisterDoctorValidation(req.body);
@@ -60,31 +67,33 @@ const registerDoctor = asyncHandler(async (req, res, next) => {
       reject({ message: `Unable to send email to ${admin.email}` });
     });
   });
-  const token = signToken(doctor);
+  await sendDoctorEmail(doctor);
   await doctor.save();
 
   await Promise.all(promises)
     .then(async () => {
-      res.send({
-        token,
-        _id: doctor._id,
-        name: doctor.name,
-        email: doctor.email,
-        phone: doctor.phone,
-        image: doctor.image,
-        hasClinic: req.body.hasClinic,
-        clinicAddress: doctor.clinicAddress,
-        designation: doctor.designation,
-        address: doctor.address,
-        country: doctor.country,
-        city: doctor.city,
-      });
+      res.send(
+        SuccessResponse("Your account is pending approval.", {
+          user: {
+            _id: doctor._id,
+            name: doctor.name,
+            email: doctor.email,
+            phone: doctor.phone,
+            image: doctor.image,
+            hasClinic: req.body.hasClinic,
+            clinicAddress: doctor.clinicAddress,
+            designation: doctor.designation,
+            address: doctor.address,
+            country: doctor.country,
+            city: doctor.city,
+          },
+        })
+      );
     })
     .catch((error) => {
       return next(new ErrorResponse(400, error.message));
     });
 });
-
 const doctorVerify = asyncHandler(async (req, res, next) => {
   const otp = await OTP.findOne({ otp: req.params.otp, type: "register" });
   // console.log(otp)
@@ -135,6 +144,8 @@ const loginDoctor = asyncHandler(async (req, res, next) => {
 
   const isCorrect = await doctor.matchPassword(req.body.password);
   if (!isCorrect) return next(new ErrorResponse(401, `Invalid credentials!`));
+
+  if (!doctor.verified) return next(new ErrorResponse(401, `Your account is pending approval.`));
 
   const token = signToken(doctor);
 
@@ -206,32 +217,22 @@ const changePassword = asyncHandler(async (req, res, next) => {
   }
 });
 
-const ForgetPasswordReq = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await Doctor.findOne({ email });
+const ForgetPasswordReq = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+  const user = await Doctor.findOne({ email });
 
-    if (user) {
-      const token = await signToken(user);
-      const url = `https://bazar-mongodb.herokuapp.com`;
-      const link = `${url}/api/user/forget-password/${email}/${token}`;
-
-      sendEmail(user.email, {
-        subject: "Kharreedlo",
-        text: "Forget Password",
-        html: `<h4>Click on the link to change your password</h4><br>${link}`,
-      });
-    }
-
-    res.status(200).send({
-      message: "Email sent successfully!",
-    });
-  } catch (error) {
-    res.status(500).send({
-      message: "Network Error",
-    });
+  if (!user) {
+    return next(new ErrorResponse(401, `No user found with this email.`));
   }
-};
+
+  const emailToken = signEmailToken(user);
+
+  await sendForgetPasswordEmail(user, emailToken);
+
+  res
+    .status(200)
+    .send(SuccessResponse("We have emailed a reset link to your account."));
+});
 
 const forgetPasswordVerify = async (req, res) => {
   const { token, email } = req.params;
@@ -250,35 +251,28 @@ const forgetPasswordVerify = async (req, res) => {
   }
 };
 
-const resetPassword = async (req, res) => {
+const resetPassword = asyncHandler(async (req, res, next) => {
   const { token, newPassword } = req.body;
 
-  try {
-    const user = jwt.verify(token, process.env.JWT_SECRET);
-    // console.log(user);
+  const user = jwt.verify(token, process.env.EMAIL_SECRET);
 
-    const PasswordHash = bcrypt.hashSync(newPassword);
-    // console.log(PasswordHash);
+  const PasswordHash = bcrypt.hashSync(newPassword);
 
-    await Doctor.updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          password: PasswordHash,
-        },
+  const savedUser = await Doctor.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        password: PasswordHash,
       },
-      { runValidators: true }
-    );
+    },
+    { runValidators: true, new: true }
+  );
 
-    res.status(200).send({
-      message: "Your password change successfully!",
-    });
-  } catch (error) {
-    res.status(401).send({
-      message: "Invalid Token",
-    });
-  }
-};
+  if (!savedUser)
+    next(new ErrorResponse(401, `Unable to update your password.`));
+
+  res.status(200).send(SuccessResponse("Your password change successfully!"));
+});
 
 const signUpWithProvider = async (req, res) => {
   try {

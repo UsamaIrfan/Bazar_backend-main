@@ -54,9 +54,18 @@ const PaginationResponse = (message, body, key) => ({
   [key ? key : "data"]: body.docs,
 });
 
+class HttpException extends Error {
+  constructor(status, message, errors) {
+    super(message);
+    this.status = status;
+    this.message = message;
+    this.errors = errors;
+  }
+}
 
 module.exports = {
   SuccessResponse,
   ErrorResponse,
   PaginationResponse,
+  HttpError: HttpException,
 };

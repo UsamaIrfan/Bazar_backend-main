@@ -1,9 +1,10 @@
 const bcrypt = require("bcryptjs");
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
+const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin");
 const Doctor = require("../models/Doctor");
-const { signToken } = require("../config/auth");
+const { signToken, signEmailToken } = require("../config/auth");
 const asyncHandler = require("../middleware/async");
 const ErrorResponse = require("../utils/ErrorResponse");
 const {
@@ -12,6 +13,10 @@ const {
   ChangePasswordAdminValidation,
 } = require("../utils/valid");
 const { PaginationResponse, SuccessResponse } = require("../utils/response");
+const {
+  doctorAccountVerifiedEmail,
+  sendForgetPasswordEmail,
+} = require("../config/email");
 dayjs.extend(utc);
 
 const loginAdmin = asyncHandler(async (req, res, next) => {
@@ -57,8 +62,56 @@ const registerAdmin = asyncHandler(async (req, res, next) => {
   res.send({ message: "Admin created successfully!" });
 });
 
+const ForgetPasswordReq = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+  const user = await Admin.findOne({ email });
+
+  if (!user) {
+    return next(new ErrorResponse(401, `No user found with this email.`));
+  }
+
+  const emailToken = signEmailToken(user);
+
+  await sendForgetPasswordEmail(user, emailToken);
+
+  res
+    .status(200)
+    .send(SuccessResponse("We have emailed a reset link to your account."));
+});
+
+const resetPassword = asyncHandler(async (req, res, next) => {
+  const { token, newPassword } = req.body;
+
+  const user = jwt.verify(token, process.env.EMAIL_SECRET);
+
+  const PasswordHash = bcrypt.hashSync(newPassword);
+
+  const savedUser = await Admin.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        password: PasswordHash,
+      },
+    },
+    { runValidators: true, new: true }
+  );
+
+  if (!savedUser)
+    next(new ErrorResponse(401, `Unable to update your password.`));
+
+  res.status(200).send(SuccessResponse("Your password change successfully!"));
+});
+
 const getAllDoctors = asyncHandler(async (req, res, next) => {
-  const doctors = await Doctor.paginate({}, { sort: { _id: -1 } });
+  const { page, limit } = req.query;
+  const doctors = await Doctor.paginate(
+    {},
+    {
+      sort: { _id: -1 },
+      ...(page ? { page: parseInt(page) } : {}),
+      ...(limit ? { limit: parseInt(limit) } : {}),
+    }
+  );
   if (!doctors) return next(new ErrorResponse(400, "No doctors found"));
   res.send(PaginationResponse(null, doctors, "doctors"));
 });
@@ -87,16 +140,31 @@ const updateStaff = asyncHandler(async (req, res, next) => {
 });
 
 const getUnverifiedDoctors = asyncHandler(async (req, res, next) => {
-  const doctors = await Doctor.paginate({ verified: false });
+  const { page, limit } = req.query;
+  const doctors = await Doctor.paginate(
+    { verified: false },
+    {
+      ...(page ? { page: parseInt(page) } : {}),
+      ...(limit ? { limit: parseInt(limit) } : {}),
+    }
+  );
 
   if (!doctors) return next(new ErrorResponse(400, "No Doctors found."));
 
   res.send(PaginationResponse(null, doctors, "doctors"));
 });
 
-
 const getVerifiedDoctors = asyncHandler(async (req, res, next) => {
-  const doctors = await Doctor.paginate({ verified: true });
+  const { page, limit } = req.query;
+  const doctors = await Doctor.paginate(
+    {
+      verified: true,
+    },
+    {
+      ...(page ? { page: parseInt(page) } : {}),
+      ...(limit ? { limit: parseInt(limit) } : {}),
+    }
+  );
 
   if (!doctors) return next(new ErrorResponse(400, "No Doctors found."));
 
@@ -121,6 +189,7 @@ const verifyDoctorById = asyncHandler(async (req, res, next) => {
       )
     );
 
+  await doctorAccountVerifiedEmail(doctor);
   res.send(SuccessResponse("Doctor Updated Successfully"));
 });
 
@@ -171,4 +240,6 @@ module.exports = {
   getUnverifiedDoctors,
   verifyDoctorById,
   getVerifiedDoctors,
+  ForgetPasswordReq,
+  resetPassword,
 };

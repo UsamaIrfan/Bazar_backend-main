@@ -12,6 +12,8 @@ const {
   getUnverifiedDoctors,
   verifyDoctorById,
   getVerifiedDoctors,
+  ForgetPasswordReq,
+  resetPassword,
 } = require("../controller/adminController");
 
 //login a admin
@@ -20,7 +22,14 @@ router.post("/login", loginAdmin);
 //add a Doctor
 router.post("/register", registerAdmin);
 
+// Change Password
 router.put("/change-password", changePassword);
+
+// Reset Password
+router.post('/reset-password', resetPassword)
+
+// Forget Password Email Request
+router.post('/forget-password-email', ForgetPasswordReq);
 
 //get all Doctor
 router.get("/doctor", getAllDoctors);

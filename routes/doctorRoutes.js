@@ -9,8 +9,8 @@ const {
   getUserById,
   updateUser,
   deleteUser,
-  sendOtpVerificationCode,
-  verifyOtpCode,
+  resetPassword,
+  ForgetPasswordReq,
 } = require("../controller/doctorController");
 
 //register a user
@@ -28,11 +28,11 @@ router.get("/", getAllUsers);
 //change password
 router.post("/change-password", changePassword);
 
-//Send OTP Verification code
-// router.post("/send-otp", sendOtpVerificationCode);
+// Reset Password
+router.post('/reset-password', resetPassword)
 
-//Verify OTP code
-// router.post("/verify-otp", verifyOtpCode);
+// Forget Password Email Request
+router.post('/forget-password-email', ForgetPasswordReq);
 
 //get a user
 router.get("/:id", getUserById);

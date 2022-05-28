@@ -1,12 +1,16 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require("otp-generator");
-const { sendOtpMail } = require("../config/email");
+const {
+  sendOtpMail,
+  sendEmailVerification,
+  sendForgetPasswordEmail,
+} = require("../config/email");
 
 // Local Imports
 const User = require("../models/User");
 const OTP = require("../models/Otp");
-const { signToken } = require("../config/auth");
+const { signToken, signEmailToken } = require("../config/auth");
 const { sendEmail } = require("../config/sendEmail");
 const ErrorResponse = require("../utils/ErrorResponse");
 const {
@@ -17,6 +21,7 @@ const {
   LoginUserValidation,
 } = require("../utils/valid");
 const asyncHandler = require("../middleware/async");
+const { SuccessResponse, PaginationResponse } = require("../utils/response");
 
 const registerUser = asyncHandler(async (req, res, next) => {
   const isValid = await RegisterUserValidation(req.body);
@@ -30,7 +35,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
     name: req.body.name,
     email: req.body.email,
     phone: req.body.phone,
-    nic: req.body.nic,
     verified: false,
     password,
   };
@@ -40,48 +44,99 @@ const registerUser = asyncHandler(async (req, res, next) => {
   const user = new User({ ...newUser });
   if (!user) return next(new ErrorResponse(401, `User not created!`));
 
-  const otpCode = otpGenerator.generate(6, {
-    upperCaseAlphabets: false,
-    specialChars: false,
-    lowerCaseAlphabets: false,
-    digits: true,
-  });
+  const emailToken = signEmailToken(user);
 
-  const { success, error } = await sendOtpMail(user.email, user.name, otpCode);
+  await sendEmailVerification(user, emailToken);
 
   const token = signToken(user);
 
   await user.save();
 
-  res.send({
-    token,
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    image: user.image,
-    emailSent: success,
-    emailError: error,
-    message: success
-      ? "We have sent you a verification code to your provided email address. Please verify your email."
-      : undefined,
-  });
+  res.send(
+    SuccessResponse(
+      "We have sent you a verification code to your provided email address. Please verify your email.",
+      {
+        token,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          image: user.image,
+        },
+      }
+    )
+  );
+});
 
-  // const otp = await OTP.create({ ...newOTP });
-  // if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
-  // const { success, error } = sendTwilioOtpSMS(user.phone, {
-  //   body: "Your OTP code is " + otpCode,
-  // });
-  // if (success) {
-  //   res.send({ message: "User created successfully!", otp });
-  // } else {
-  //   res.status(500).send({
-  //     message: "Unable to send OTP!",
-  //     error: {
-  //       error,
-  //     },
-  //   });
-  // }
+const resendUserVerificationEmail = asyncHandler(async (req, res, next) => {
+  const { user } = req.params;
+
+  const savedUser = await User.findById(user);
+  if (!savedUser) return next(new ErrorResponse(401, `User not created!`));
+
+  const emailToken = signEmailToken(savedUser);
+
+  await sendEmailVerification(user, emailToken);
+
+  res.send(
+    SuccessResponse(
+      "We have sent you a verification code to your provided email address. Please verify your email."
+    )
+  );
+});
+
+const userVerifyEmail = asyncHandler(async (req, res, next) => {
+  const { user: id, token } = req.query;
+
+  if (!id) {
+    return next(
+      new ErrorResponse(400, `ID must contain a value or invalid ID!`)
+    );
+  }
+
+  if (!token) {
+    return next(new ErrorResponse(400, `Token must contain a value`));
+  }
+
+  const decoded = jwt.verify(token, process.env.EMAIL_SECRET);
+
+  if (!decoded) {
+    return next(new ErrorResponse(400, `Invalid or expired link.`));
+  }
+
+  const savedUser = await User.findOneAndUpdate(
+    { _id: id, verified: false },
+    { $set: { verified: true } },
+    {
+      runValidators: true,
+      new: true,
+    }
+  );
+
+  if (!savedUser)
+    return next(
+      new ErrorResponse(
+        400,
+        `Unable to verify user email. There might be no account registered with this ID or the link has already been used.`
+      )
+    );
+
+  const userToken = signToken(savedUser);
+
+  res.send(
+    SuccessResponse(null, {
+      token: userToken,
+      user: {
+        _id: savedUser._id,
+        name: savedUser.name,
+        email: savedUser.email,
+        phone: savedUser.phone,
+        image: savedUser.image,
+        verified: savedUser.verified,
+      },
+    })
+  );
 });
 
 const userVerify = asyncHandler(async (req, res, next) => {
@@ -101,7 +156,6 @@ const userVerify = asyncHandler(async (req, res, next) => {
   ).populate("user");
 
   await OTP.deleteOne({ otp: req.params.otp, type: "register" });
-  // console.log(user)
   const token = signToken(user);
 
   res.send({
@@ -127,49 +181,29 @@ const loginUser = asyncHandler(async (req, res, next) => {
     if (!user)
       return next(new ErrorResponse(404, `Invalid email or password!`));
   } else {
-    // console.log('login with phone')
     user = await User.findOne({ phone: req.body.user });
     if (!user)
       return next(new ErrorResponse(404, `Invalid phone or password!`));
   }
-
-  // if (!user.verified) return next(new ErrorResponse(404, `User not verified!`));
-  // // console.log(user);
 
   const isCorrect = await user.matchPassword(req.body.password);
   if (!isCorrect) return next(new ErrorResponse(401, `Invalid credentials!`));
 
   const token = signToken(user);
 
-  res.send({
-    token,
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    image: user.image,
-  });
-
-  // const date = new Date();
-  // date.setMinutes(date.getMinutes() + 10);
-  // const newOTP = {
-  //   user: user._id,
-  //   type: "login",
-  //   expiration: date,
-  //   otp: otpGenerator.generate(6, {
-  //     upperCaseAlphabets: false,
-  //     specialChars: false,
-  //     lowerCaseAlphabets: false,
-  //     digits: true,
-  //   }),
-  // };
-
-  // await OTP.findOneAndDelete({ user: user._id, type: "login" });
-
-  // const otp = await OTP.create(newOTP);
-  // if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
-
-  // res.send({ message: "verify your OTP!", otp, user: user._id });
+  res.send(
+    SuccessResponse(null, {
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        image: user.image,
+        verified: user.verified,
+      },
+    })
+  );
 });
 
 const loginOTPVerify = asyncHandler(async (req, res, next) => {
@@ -225,79 +259,57 @@ const changePassword = asyncHandler(async (req, res, next) => {
   }
 });
 
-const ForgetPasswordReq = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
+const ForgetPasswordReq = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
 
-    if (user) {
-      const token = await signToken(user);
-      const url = `https://bazar-mongodb.herokuapp.com`;
-      const link = `${url}/api/user/forget-password/${email}/${token}`;
-
-      sendEmail(user.email, {
-        subject: "Kharreedlo",
-        text: "Forget Password",
-        html: `<h4>Click on the link to change your password</h4><br>${link}`,
-      });
-    }
-
-    res.status(200).send({
-      message: "Email sent successfully!",
-    });
-  } catch (error) {
-    res.status(500).send({
-      message: "Network Error",
-    });
+  if (!user) {
+    return next(new ErrorResponse(401, `No user found with this email.`));
   }
-};
 
-const forgetPasswordVerify = async (req, res) => {
+  const emailToken = signEmailToken(user);
+
+  await sendForgetPasswordEmail(user, emailToken);
+
+  res
+    .status(200)
+    .send(SuccessResponse("We have emailed a reset link to your account."));
+});
+
+const forgetPasswordVerify = asyncHandler(async (req, res, next) => {
   const { token, email } = req.params;
-  // console.log(token, email);
-  try {
-    await jwt.verify(token, process.env.JWT_SECRET);
-    res
-      .status(301)
-      .redirect(
-        `https://www.kharreedlo.com?forgetPassword=true&token=${token}&email=${email}`
-      );
-  } catch (error) {
-    res.status(401).send({
-      message: "Invalid Token",
-    });
+  const user = User.findOne({ email });
+  if (!user) {
+    return next(new ErrorResponse(401, `Unable to process your request.`));
   }
-};
+  await jwt.verify(token, process.env.EMAIL_SECRET);
+  res.status(301).redirect(process.env.RESET_REDIRECT_LINK);
+});
 
-const resetPassword = async (req, res) => {
+const resetPassword = asyncHandler(async (req, res, next) => {
   const { token, newPassword } = req.body;
 
-  try {
-    const user = jwt.verify(token, process.env.JWT_SECRET);
-    // console.log(user);
+  const user = jwt.verify(token, process.env.EMAIL_SECRET);
 
-    const PasswordHash = bcrypt.hashSync(newPassword);
-    // console.log(PasswordHash);
+  console.log(newPassword, user);
 
-    await User.updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          password: PasswordHash,
-        },
+  const PasswordHash = bcrypt.hashSync(newPassword);
+
+  const savedUser = await User.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        password: PasswordHash,
       },
-      { runValidators: true }
-    );
+    },
+    { runValidators: true, new: true }
+  );
 
-    res.status(200).send({
-      message: "Your password change successfully!",
-    });
-  } catch (error) {
-    res.status(401).send({
-      message: "Invalid Token",
-    });
-  }
-};
+  if (!savedUser)
+    next(new ErrorResponse(401, `Unable to update your password.`));
+
+  res.status(200).send(SuccessResponse("Your password change successfully!"));
+});
 
 const signUpWithProvider = async (req, res) => {
   try {
@@ -339,54 +351,24 @@ const signUpWithProvider = async (req, res) => {
 };
 
 const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find({}).sort({ _id: -1 });
-    res.send(users);
-  } catch (err) {
-    res.status(500).send({ message: err.message });
-  }
+  const { page, limit } = req.query;
+  const users = await User.paginate(
+    {},
+    {
+      ...(page ? { page: parseInt(page) } : {}),
+      ...(limit ? { limit: parseInt(limit) } : {}),
+      sort: { _id: -1 },
+    }
+  );
+  if (!users) next(new ErrorResponse(400, `Unable to fetch users.`));
+  res.send(PaginationResponse(null, users, "users"));
 };
 
-const getUserById = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    res.send(user);
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
-
-// const updateUser = async (req, res) => {
-//   try {
-//     const isValid = await RegisterUserValidation(req.body);
-//     const user = await User.findById(req.params.id);
-//     if (user) {
-//       user.name = req.body.name;
-//       user.address = req.body.address;
-//       user.phone = req.body.phone;
-//       user.image = req.body.image;
-//       user.nic = req.body.nic;
-//       const updatedUser = await user.save();
-//       const token = signToken(updatedUser);
-//       res.send({
-//         token,
-//         _id: updatedUser._id,
-//         name: updatedUser.name,
-//         email: updatedUser.email,
-//         address: updatedUser.address,
-//         phone: updatedUser.phone,
-//         image: updatedUser.image,
-//         nic: updatedUser.nic,
-//       });
-//     }
-//   } catch (err) {
-//     res.status(404).send({
-//       message: "Your email is not valid!",
-//     });
-//   }
-// };
+const getUserById = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+  if (!user) next(new ErrorResponse(400, `User not found`));
+  res.send(SuccessResponse(null, { user }));
+});
 
 const updateUser = asyncHandler(async (req, res, next) => {
   const isValid = await UpdateUserValidation(req.body);
@@ -446,4 +428,6 @@ module.exports = {
   resetPassword,
   userVerify,
   loginOTPVerify,
+  resendUserVerificationEmail,
+  userVerifyEmail,
 };

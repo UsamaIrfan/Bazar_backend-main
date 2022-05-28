@@ -23,6 +23,23 @@ const signToken = (user) => {
   );
 };
 
+const signEmailToken = (user) => {
+  return jwt.sign(
+    {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      address: user.address,
+      phone: user.phone,
+      image: user.image,
+    },
+    process.env.EMAIL_SECRET,
+    {
+      expiresIn: "30m",
+    }
+  );
+};
+
 const isAuth = async (req, res, next) => {
   const { authorization } = req.headers;
   if (!authorization)
@@ -33,10 +50,7 @@ const isAuth = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
 
-    console.log("DEC", decoded)
-
     const user = await User.findById(decoded._id);
-    console.log("USER", user);
     if (!user) {
       return next(
         new ErrorResponse(401, "You are not authorized to perform this action")
@@ -81,6 +95,7 @@ const isAdmin = () => {
 
 module.exports = {
   signToken,
+  signEmailToken,
   isAuth,
   isAdmin,
 };

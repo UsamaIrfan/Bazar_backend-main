@@ -146,6 +146,27 @@ const LoginDoctorValidation = async (body) => {
   }
 };
 
+// Appointment
+const AddAppointmentValidation = async (body) => {
+  const schema = Joi.object({
+    doctor: Joi.string().required(),
+    services: Joi.array().items(
+      Joi.object({
+        cost: Joi.number(),
+        name: Joi.string(),
+        estDuration: Joi.string(),
+      })
+    ),
+    time: Joi.string().required(),
+    paymentMethod: Joi.string().valid("cash", "card"),
+  });
+  try {
+    await schema.validateAsync(body);
+  } catch (error) {
+    return error;
+  }
+};
+
 module.exports = {
   isValidateEmail,
   ChangePasswordValidation,
@@ -158,4 +179,6 @@ module.exports = {
   RegisterAdminValidation,
   LoginAdminValidation,
   ChangePasswordAdminValidation,
+  //Appointment
+  AddAppointmentValidation,
 };

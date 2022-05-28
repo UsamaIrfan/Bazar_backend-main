@@ -3,26 +3,18 @@ const express = require("express");
 const cors = require("cors");
 
 const connectDB = require("../config/db");
-const productRoutes = require("../routes/productRoutes");
 const userRoutes = require("../routes/userRoutes");
 const adminRoutes = require("../routes/adminRoutes");
-const orderRoutes = require("../routes/orderRoutes");
-const userOrderRoutes = require("../routes/userOrderRoutes");
-const categoryRoutes = require("../routes/categoryRoutes");
-const couponRoutes = require("../routes/couponRoutes");
-const vendorRoutes = require("../routes/vendorRoutes");
-const purchaseRoutes = require("../routes/purchaseRoutes");
-const shippingRoutes = require("../routes/shippingRoutes");
+const paymentRoutes = require("../routes/paymentRoutes");
+const appointmentRoutes = require("../routes/appointmentRoutes");
 // const currencyRoutes = require("../routes/currencyRoutes");
 const doctorRoutes = require("../routes/doctorRoutes");
-const { isAuth, isAdmin } = require("../config/auth");
 const cookieSession = require("cookie-session");
 require("../config/passport-setup");
 const passport = require("passport");
 const ErrorHandler = require("../middleware/ErrorHandler");
 const NotFound = require("../routes/404");
 const helmet = require("helmet");
-const { PURCHASE_ROLE, VENDOR_ROLE, ORDER_ROLE } = require("../utils/roles");
 
 connectDB();
 const app = express();
@@ -53,20 +45,13 @@ app.get("/logout", (req, res) => {
 });
 
 //this for route will need for store front, also for admin dashboard
-app.use("/api/products/", productRoutes);
-app.use("/api/category/", categoryRoutes);
-app.use("/api/coupon/", couponRoutes);
 app.use("/api/user/", userRoutes);
-app.use("/api/shippings/", shippingRoutes);
-app.use("/api/order/", isAuth, userOrderRoutes);
-app.use("/api/vendors/", isAdmin(VENDOR_ROLE), vendorRoutes);
-app.use("/api/purchases/", isAdmin(PURCHASE_ROLE), purchaseRoutes);
+app.use("/api/appointment/", appointmentRoutes);
+app.use("/api/payment/", paymentRoutes);
 app.use("/api/doctor/", doctorRoutes);
-// app.use("/api/currency/", currencyRoutes);
 
 //if you not use admin dashboard then these two route will not needed.
 app.use("/api/admin/", adminRoutes);
-app.use("/api/orders/", isAdmin(ORDER_ROLE), orderRoutes);
 
 app.use(NotFound);
 app.use(ErrorHandler);

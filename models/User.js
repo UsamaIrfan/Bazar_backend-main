@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const mongoosePaginate = require("mongoose-paginate");
 
 const userSchema = new mongoose.Schema(
   {
@@ -43,18 +44,19 @@ const userSchema = new mongoose.Schema(
     lastLoginIP: {
       type: String,
       required: false,
-    }
+    },
   },
   {
     timestamps: true,
   }
 );
 
+userSchema.plugin(mongoosePaginate);
+
 userSchema.methods.matchPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-
-const User = mongoose.models.User || mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 module.exports = User;
