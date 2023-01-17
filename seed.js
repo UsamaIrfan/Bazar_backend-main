@@ -17,6 +17,7 @@ const importData = async () => {
   try {
     // await User.deleteMany();
     // await User.insertMany(userData);
+    
 
     await Admin.deleteMany();
     await Admin.insertMany(adminData);
