@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
   getAllProducts,
+  getAllPaginatedProducts,
   getProductById,
   getProductBySlug,
   getProductByCategory,
@@ -14,11 +15,14 @@ const {
 const { isAdmin } = require("../config/auth");
 const { PRODUCT_ROLE } = require("../utils/roles");
 
-//get a product
-router.get("/:id", getProductById);
-
 //get all products
 router.get("/", getAllProducts);
+
+//get all products
+router.get("/paginate", getAllPaginatedProducts);
+
+//get a product
+router.get("/:id", getProductById);
 
 //get a product by slug
 router.get("/slug/:slug", getProductBySlug);

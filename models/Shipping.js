@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const shippingSchema = new mongoose.Schema(
     {
@@ -25,5 +26,6 @@ const shippingSchema = new mongoose.Schema(
     }
 );
 
+shippingSchema.plugin(mongoosePaginate);
 const Shipping = mongoose.models.Shipping || mongoose.model('Shipping', shippingSchema);
 module.exports = Shipping;

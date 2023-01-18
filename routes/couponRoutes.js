@@ -1,32 +1,36 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const {
   addCoupon,
   addAllCoupon,
   getAllCoupons,
+  getAllPaginatedCoupons,
   getCouponById,
   updateCoupon,
   deleteCoupon,
-} = require('../controller/couponController');
-const { isAdmin } = require('../config/auth');
-const { COUPON_ROLE } = require('../utils/roles');
+} = require("../controller/couponController");
+const { isAdmin } = require("../config/auth");
+const { COUPON_ROLE } = require("../utils/roles");
 
 //get all coupon
-router.get('/', getAllCoupons);
+router.get("/", getAllCoupons);
+
+//get all coupon
+router.get("/paginate", getAllPaginatedCoupons);
 
 //get a coupon
-router.get('/:id', getCouponById);
+router.get("/:id", getCouponById);
 
 //add a coupon
-router.post('/add', isAdmin(COUPON_ROLE), addCoupon);
+router.post("/add", isAdmin(COUPON_ROLE), addCoupon);
 
 //add multiple coupon
-router.post('/all', isAdmin(COUPON_ROLE), addAllCoupon);
+router.post("/all", isAdmin(COUPON_ROLE), addAllCoupon);
 
 //update a coupon
-router.put('/:id', isAdmin(COUPON_ROLE), updateCoupon);
+router.put("/:id", isAdmin(COUPON_ROLE), updateCoupon);
 
 //delete a coupon
-router.delete('/:id', isAdmin(COUPON_ROLE), deleteCoupon);
+router.delete("/:id", isAdmin(COUPON_ROLE), deleteCoupon);
 
 module.exports = router;

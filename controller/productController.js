@@ -25,6 +25,15 @@ const getAllProducts = asyncHandler(async (req, res, next) => {
   res.send(products);
 });
 
+const getAllPaginatedProducts = asyncHandler(async (req, res, next) => {
+  const query = req.query;
+  const products = await Product.paginate(
+    { ...query },
+    { page: query.page ?? 1, limit: query.limit ?? 30, sort: { _id: -1 } }
+  );
+  res.send(products);
+});
+
 const getProductBySlug = asyncHandler(async (req, res, next) => {
   const product = await Product.findOne({ slug: req.params.slug });
   if (!product)
@@ -104,6 +113,7 @@ module.exports = {
   addProduct,
   addAllProducts,
   getAllProducts,
+  getAllPaginatedProducts,
   getProductById,
   getProductBySlug,
   getProductByCategory,

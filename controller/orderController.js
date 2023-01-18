@@ -1,4 +1,5 @@
-const Order = require('../models/Order');
+const asyncHandler = require("../middleware/async");
+const Order = require("../models/Order");
 
 const getAllOrders = async (req, res) => {
   try {
@@ -10,6 +11,17 @@ const getAllOrders = async (req, res) => {
     });
   }
 };
+
+const getAllPaginatedOrders = asyncHandler(async (req, res) => {
+  const query = req.query;
+
+  const orders = await Order.paginate(
+    { ...query },
+    { page: query.page ?? 1, limit: query.limit ?? 30, sort: { _id: -1 } }
+  );
+
+  res.send(orders);
+});
 
 const getOrderByUser = async (req, res) => {
   try {
@@ -51,7 +63,7 @@ const updateOrder = (req, res) => {
         });
       } else {
         res.status(200).send({
-          message: 'Order Updated Successfully!',
+          message: "Order Updated Successfully!",
         });
       }
     }
@@ -66,7 +78,7 @@ const deleteOrder = (req, res) => {
       });
     } else {
       res.status(200).send({
-        message: 'Order Deleted Successfully!',
+        message: "Order Deleted Successfully!",
       });
     }
   });
@@ -74,6 +86,7 @@ const deleteOrder = (req, res) => {
 
 module.exports = {
   getAllOrders,
+  getAllPaginatedOrders,
   getOrderById,
   getOrderByUser,
   updateOrder,

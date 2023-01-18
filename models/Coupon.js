@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const couponSchema = new mongoose.Schema(
   {
@@ -37,5 +38,6 @@ const couponSchema = new mongoose.Schema(
   }
 );
 
+couponSchema.plugin(mongoosePaginate)
 const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 module.exports = Coupon;

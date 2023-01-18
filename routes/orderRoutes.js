@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getAllOrders,
+  getAllPaginatedOrders,
   getOrderById,
   getOrderByUser,
   updateOrder,
@@ -10,6 +11,9 @@ const {
 
 //get all orders
 router.get('/', getAllOrders);
+
+//get all paginated orders
+router.get('/paginate', getAllPaginatedOrders);
 
 //get all order by a user
 router.get('/user/:id', getOrderByUser);
