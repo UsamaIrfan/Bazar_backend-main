@@ -7,11 +7,11 @@ const getAllVendors = asyncHandler(async (req, res, next) => {
 });
 
 const getAllPaginatedVendors = asyncHandler(async (req, res, next) => {
-  const query = req.query;
+  const { page, limit, ...query } = req.query;
 
   const vendors = await Vendor.paginate(
     { ...query },
-    { page: query.page ?? 1, limit: query.limit ?? 30, sort: { _id: -1 } }
+    { page: page ?? 1, limit: limit ?? 30, sort: { _id: -1 } }
   );
 
   res.send(vendors);

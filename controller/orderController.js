@@ -13,11 +13,11 @@ const getAllOrders = async (req, res) => {
 };
 
 const getAllPaginatedOrders = asyncHandler(async (req, res) => {
-  const query = req.query;
+  const { page, limit, ...query } = req.query;
 
   const orders = await Order.paginate(
     { ...query },
-    { page: query.page ?? 1, limit: query.limit ?? 30, sort: { _id: -1 } }
+    { page: page ?? 1, limit: limit ?? 30, sort: { _id: -1 } }
   );
 
   res.send(orders);
