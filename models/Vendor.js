@@ -1,10 +1,11 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const vendorSchema = new mongoose.Schema(
   {
     admin: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Admin',
+      ref: "Admin",
       required: true,
     },
     nic: {
@@ -43,13 +44,13 @@ const vendorSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Verified', 'UnVerified', `Rejected`],
+      enum: ["Verified", "UnVerified", `Rejected`],
     },
     purchase: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Purchase',
-      }
+        ref: "Purchase",
+      },
     ],
   },
   {
@@ -57,5 +58,6 @@ const vendorSchema = new mongoose.Schema(
   }
 );
 
-const Vendor = mongoose.models.Vendor || mongoose.model('Vendor', vendorSchema);
+vendorSchema.plugin(mongoosePaginate);
+const Vendor = mongoose.models.Vendor || mongoose.model("Vendor", vendorSchema);
 module.exports = Vendor;

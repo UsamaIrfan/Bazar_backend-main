@@ -1,13 +1,14 @@
-const Coupon = require('../models/Coupon');
-const dayjs = require('dayjs');
-const utc = require('dayjs/plugin/utc');
+const Coupon = require("../models/Coupon");
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const asyncHandler = require("../middleware/async");
 dayjs.extend(utc);
 
 const addCoupon = async (req, res) => {
   try {
     const newCoupon = new Coupon(req.body);
     await newCoupon.save();
-    res.send({ message: 'Coupon Added Successfully!' });
+    res.send({ message: "Coupon Added Successfully!" });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
@@ -17,7 +18,7 @@ const addAllCoupon = async (req, res) => {
   try {
     await Coupon.insertMany(req.body);
     res.status(200).send({
-      message: 'Coupon Added successfully!',
+      message: "Coupon Added successfully!",
     });
   } catch (err) {
     res.status(500).send({
@@ -36,6 +37,17 @@ const getAllCoupons = async (req, res) => {
     });
   }
 };
+
+const getAllPaginatedCoupons = asyncHandler(async (req, res) => {
+  const { page, limit, ...query } = req.query;
+
+  const coupons = await Coupon.paginate(
+    { ...query },
+    { page: page ?? 1, limit: limit ?? 30, sort: { _id: -1 } }
+  );
+
+  res.send(coupons);
+});
 
 const getCouponById = async (req, res) => {
   try {
@@ -60,10 +72,10 @@ const updateCoupon = async (req, res) => {
       coupon.productType = req.body.productType;
       coupon.logo = req.body.logo;
       await coupon.save();
-      res.send({ message: 'Coupon Updated Successfully!' });
+      res.send({ message: "Coupon Updated Successfully!" });
     }
   } catch (err) {
-    res.status(404).send({ message: 'Coupon not found!' });
+    res.status(404).send({ message: "Coupon not found!" });
   }
 };
 
@@ -75,7 +87,7 @@ const deleteCoupon = (req, res) => {
       });
     } else {
       res.status(200).send({
-        message: 'Coupon Deleted Successfully!',
+        message: "Coupon Deleted Successfully!",
       });
     }
   });
@@ -85,6 +97,7 @@ module.exports = {
   addCoupon,
   addAllCoupon,
   getAllCoupons,
+  getAllPaginatedCoupons,
   getCouponById,
   updateCoupon,
   deleteCoupon,

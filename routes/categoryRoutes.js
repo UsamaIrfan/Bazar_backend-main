@@ -4,6 +4,7 @@ const {
   addCategory,
   addAllCategory,
   getAllCategory,
+  getAllPaginatedCategory,
   getCategoryById,
   updateCategory,
   updateStatus,
@@ -14,6 +15,9 @@ const { CATEGORY_ROLE } = require('../utils/roles');
 
 //get all category
 router.get('/', getAllCategory);
+
+//get all paginated category
+router.get('/paginate', getAllPaginatedCategory);
 
 //get a category
 router.get('/:id', getCategoryById);

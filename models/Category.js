@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const categorySchema = new mongoose.Schema({
   parent: {
@@ -20,11 +21,13 @@ const categorySchema = new mongoose.Schema({
   children: [{}],
   status: {
     type: String,
-    enum: ['Show', 'Hide'],
-    default: 'Show',
+    enum: ["Show", "Hide"],
+    default: "Show",
   },
 });
 
-const Category = mongoose.model('Category', categorySchema);
+categorySchema.plugin(mongoosePaginate)
+
+const Category = mongoose.model("Category", categorySchema);
 
 module.exports = Category;

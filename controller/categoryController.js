@@ -1,18 +1,17 @@
-const Category = require('../models/Category');
-const asyncHandler = require('../middleware/async');
+const Category = require("../models/Category");
+const asyncHandler = require("../middleware/async");
 
 const addCategory = asyncHandler(async (req, res, next) => {
-  const category = await Category.create(req.body)
-  res.status(200).json({ category })
+  const category = await Category.create(req.body);
+  res.status(200).json({ category });
 });
 
 const addAllCategory = asyncHandler(async (req, res) => {
   const categories = await Category.insertMany(req.body);
   res.status(200).send({
-    message: 'Category Added successfully!',
+    message: "Category Added successfully!",
     categories,
   });
-
 });
 
 const getAllCategory = asyncHandler(async (req, res) => {
@@ -21,11 +20,21 @@ const getAllCategory = asyncHandler(async (req, res) => {
   res.send(categories);
 });
 
+const getAllPaginatedCategory = asyncHandler(async (req, res) => {
+  const { page, limit, ...query } = req.query;
+
+  const categories = await Category.paginate(
+    { ...query },
+    { page: page ?? 1, limit: limit ?? 30, sort: { _id: -1 } }
+  );
+
+  res.send(categories);
+});
+
 const getCategoryById = asyncHandler(async (req, res, next) => {
   const category = await Category.findById(req.params.id);
   res.send(category);
 });
-
 
 const updateCategory = async (req, res) => {
   try {
@@ -37,10 +46,10 @@ const updateCategory = async (req, res) => {
       category.icon = req.body.icon;
       category.children = req.body.children;
       await category.save();
-      res.send({ message: 'Category Updated Successfully!' });
+      res.send({ message: "Category Updated Successfully!" });
     }
   } catch (err) {
-    res.status(404).send({ message: 'Category not found!' });
+    res.status(404).send({ message: "Category not found!" });
   }
 };
 
@@ -76,7 +85,7 @@ const deleteCategory = (req, res) => {
       });
     } else {
       res.status(200).send({
-        message: 'Category Deleted Successfully!',
+        message: "Category Deleted Successfully!",
       });
     }
   });
@@ -86,6 +95,7 @@ module.exports = {
   addCategory,
   addAllCategory,
   getAllCategory,
+  getAllPaginatedCategory,
   getCategoryById,
   updateCategory,
   updateStatus,

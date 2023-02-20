@@ -23,7 +23,7 @@ const NotFound = require("../routes/404");
 const helmet = require("helmet");
 const { PURCHASE_ROLE, VENDOR_ROLE, ORDER_ROLE } = require("../utils/roles");
 
-connectDB();
+// connectDB();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -71,4 +71,11 @@ app.use(ErrorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`server running on port ${PORT}`));
+connectDB()
+  .then(() => {
+    console.log("mongodb connection success!");
+    app.listen(PORT, () => console.log(`server running on port ${PORT}`));
+  })
+  .catch((error) => {
+    console.log("mongodb connection failed!", err.message);
+  });

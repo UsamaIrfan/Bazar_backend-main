@@ -1,10 +1,11 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const orderSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     cart: [{}],
@@ -73,8 +74,8 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Processing', 'Delivered'],
-      default: 'Pending',
+      enum: ["Pending", "Processing", "Delivered"],
+      default: "Pending",
     },
   },
   {
@@ -82,5 +83,6 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
-const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
+orderSchema.plugin(mongoosePaginate);
+const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 module.exports = Order;
