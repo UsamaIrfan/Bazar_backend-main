@@ -27,10 +27,22 @@ const ChangePasswordValidation = async (body) => {
   }
 };
 
+const RegisterUserWithProviderValidation = async (body) => {
+  const schema = Joi.object({
+    provider: Joi.string().valid("facebook", "google").required(),
+    oauthToken: Joi.string().required(),
+  });
+  try {
+    await schema.validateAsync(body);
+  } catch (error) {
+    return error;
+  }
+};
+
 const RegisterUserValidation = async (body) => {
   const schema = Joi.object({
     email: Joi.string().email().required(),
-    phone: Joi.string().length(11),
+    phone: Joi.string().length(13),
     password: Joi.string().min(6).max(54).required(),
     name: Joi.string().required(),
     address: Joi.string(),
@@ -119,6 +131,7 @@ module.exports = {
   RegisterUserValidation,
   LoginUserValidation,
   UpdateUserValidation,
+  RegisterUserWithProviderValidation,
   // Admin
   RegisterAdminValidation,
   LoginAdminValidation,

@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
@@ -13,11 +13,19 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      unique: true,
+      index: {
+        unique: true,
+        partialFilterExpression: { phone: { $type: "string" } },
+      },
     },
     password: {
       type: String,
-      required: true,
+      required: false,
+    },
+
+    provider: {
+      type: String,
+      required: false,
     },
 
     image: {
@@ -40,10 +48,28 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    ip: { type: String },
+    ipAddressRegisterTime: { type: String },
+    deviceInformation: [
+      {
+        _id: false,
+        device_subscription_token: { type: String, required: false },
+        platform: {
+          type: String,
+          enum: ["android", "iOS", "ios", "web"],
+          required: false,
+        },
+        status: {
+          type: String,
+          enum: ["active", "inactive"],
+          default: "active",
+        },
+      },
+    ],
     lastLoginIP: {
       type: String,
       required: false,
-    }
+    },
   },
   {
     timestamps: true,
@@ -54,7 +80,6 @@ userSchema.methods.matchPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-
-const User = mongoose.models.User || mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 module.exports = User;

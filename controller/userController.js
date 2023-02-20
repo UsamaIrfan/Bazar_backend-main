@@ -15,13 +15,96 @@ const {
   UpdateUserValidation,
   RegisterUserValidation,
   LoginUserValidation,
+  RegisterUserWithProviderValidation,
 } = require("../utils/valid");
 const asyncHandler = require("../middleware/async");
+const { OAuth2Client } = require("google-auth-library");
+
+const signupWithProvider = asyncHandler(async (req, res, next) => {
+  const isValid = await RegisterUserWithProviderValidation(req.body);
+  if (isValid) {
+    return next(new ErrorResponse(400, `${isValid.details[0].message}`));
+  }
+
+  const { oauthToken, provider } = req.body;
+
+  let userData;
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  if (provider === "google") {
+    const ticket = await client.verifyIdToken({
+      idToken: oauthToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    userData = ticket.getPayload();
+  }
+
+  if (!userData) {
+    return next(new ErrorResponse(400, "Google account not found."));
+  }
+
+  const exists = await User.findOne({
+    $or: [
+      {
+        email: userData.email,
+      },
+    ],
+  });
+  if (exists && exists.provider === "google") {
+    const token = signToken(exists);
+
+    return res.status(200).send({
+      token,
+      _id: exists._id,
+      name: exists.name,
+      email: exists.email,
+      phone: exists.phone,
+      image: exists.image,
+    });
+  }
+  if (exists) {
+    return next(
+      new ErrorResponse(
+        422,
+        "Account not found."
+      )
+    );
+  }
+
+  const user = await User.create({
+    name: `${userData.given_name} ${userData.family_name}`,
+    email: userData.email,
+    provider,
+    image: userData.picture,
+    verified: true,
+  });
+  const token = signToken(user);
+
+  res.status(200).send({
+    token,
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    image: user.image,
+  });
+});
 
 const registerUser = asyncHandler(async (req, res, next) => {
   const isValid = await RegisterUserValidation(req.body);
   if (isValid)
     return next(new ErrorResponse(400, `${isValid.details[0].message}`));
+
+  const exists = await User.findOne({
+    $or: [{ email: req.body.email }, { phone: req.body.phone }],
+  });
+
+  if (exists) {
+    let message =
+      req.body.email === exists.email
+        ? "Email is already taken"
+        : "Phone number is already taken";
+    return next(new ErrorResponse(400, message));
+  }
 
   const salt = bcrypt.genSaltSync(10);
   const password = bcrypt.hashSync(req.body.password, salt);
@@ -31,7 +114,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     email: req.body.email,
     phone: req.body.phone,
     nic: req.body.nic,
-    verified: false,
+    verified: true,
     password,
   };
   const date = new Date();
@@ -39,15 +122,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
   const user = new User({ ...newUser });
   if (!user) return next(new ErrorResponse(401, `User not created!`));
-
-  const otpCode = otpGenerator.generate(6, {
-    upperCaseAlphabets: false,
-    specialChars: false,
-    lowerCaseAlphabets: false,
-    digits: true,
-  });
-
-  const { success, error } = await sendOtpMail(user.email, user.name, otpCode);
 
   const token = signToken(user);
 
@@ -60,28 +134,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     email: user.email,
     phone: user.phone,
     image: user.image,
-    emailSent: success,
-    emailError: error,
-    message: success
-      ? "We have sent you a verification code to your provided email address. Please verify your email."
-      : undefined,
   });
-
-  // const otp = await OTP.create({ ...newOTP });
-  // if (!otp) return next(new ErrorResponse(401, `OTP not created!`));
-  // const { success, error } = sendTwilioOtpSMS(user.phone, {
-  //   body: "Your OTP code is " + otpCode,
-  // });
-  // if (success) {
-  //   res.send({ message: "User created successfully!", otp });
-  // } else {
-  //   res.status(500).send({
-  //     message: "Unable to send OTP!",
-  //     error: {
-  //       error,
-  //     },
-  //   });
-  // }
 });
 
 const userVerify = asyncHandler(async (req, res, next) => {
@@ -131,6 +184,12 @@ const loginUser = asyncHandler(async (req, res, next) => {
     user = await User.findOne({ phone: req.body.user });
     if (!user)
       return next(new ErrorResponse(404, `Invalid phone or password!`));
+  }
+
+  if (user.provider === "google") {
+    return next(
+      new ErrorResponse(401, `This account is associated with ${user.provider}`)
+    );
   }
 
   // if (!user.verified) return next(new ErrorResponse(404, `User not verified!`));
@@ -299,45 +358,6 @@ const resetPassword = async (req, res) => {
   }
 };
 
-const signUpWithProvider = async (req, res) => {
-  try {
-    const isAdded = await User.findOne({ email: req.body.email });
-    if (isAdded) {
-      const token = signToken(isAdded);
-
-      res.send({
-        token,
-        _id: isAdded._id,
-        name: isAdded.name,
-        email: isAdded.email,
-        address: isAdded.address,
-        phone: isAdded.phone,
-        image: isAdded.image,
-      });
-    } else {
-      const newUser = new User({
-        name: req.body.name,
-        email: req.body.email,
-        image: req.body.image,
-      });
-
-      const user = await newUser.save();
-      const token = signToken(user);
-      res.send({
-        token,
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-      });
-    }
-  } catch (err) {
-    res.status(500).send({
-      message: err.message,
-    });
-  }
-};
-
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({}).sort({ _id: -1 });
@@ -433,7 +453,6 @@ const deleteUser = (req, res) => {
 };
 
 module.exports = {
-  signUpWithProvider,
   registerUser,
   loginUser,
   changePassword,
@@ -446,4 +465,5 @@ module.exports = {
   resetPassword,
   userVerify,
   loginOTPVerify,
+  signupWithProvider,
 };
