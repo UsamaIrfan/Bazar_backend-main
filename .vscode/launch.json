@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Node.js: debug nodemon",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "yarn run start:dev"
+      },
+      {
+        "name": "Node.js: debug dev",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "yarn start"
+      }
+    ]
+  }

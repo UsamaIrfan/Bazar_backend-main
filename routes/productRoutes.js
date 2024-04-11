@@ -11,6 +11,7 @@ const {
   updateProduct,
   updateStatus,
   deleteProduct,
+  updateMultipleProducts,
 } = require("../controller/productController");
 const { isAdmin } = require("../config/auth");
 const { PRODUCT_ROLE } = require("../utils/roles");
@@ -35,6 +36,9 @@ router.post("/add", isAdmin(PRODUCT_ROLE), addProduct);
 
 //add multiple products
 router.post("/all", isAdmin(PRODUCT_ROLE), addAllProducts);
+
+//update multiple products
+router.put("/multiple", isAdmin(PRODUCT_ROLE), updateMultipleProducts);
 
 //update a product
 router.put("/:id", isAdmin(PRODUCT_ROLE), updateProduct);
